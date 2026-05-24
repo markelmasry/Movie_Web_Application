@@ -19,10 +19,10 @@ public class Movie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     @Column(unique = true, nullable = false)
-    private String imdb_id;
+    private String imdbId;
 
     private String title;
-    private String year;
+    private String movieYear;
     private String genre;
     private String director;
 

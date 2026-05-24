@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface MovieRepository extends JpaRepository<Movie,Long>{
 
-    Optional<Movie> findByImdb_id(String imdb_id);
+    Optional<Movie> findByImdbId(String imdbId);
     Page<Movie> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 }
     
