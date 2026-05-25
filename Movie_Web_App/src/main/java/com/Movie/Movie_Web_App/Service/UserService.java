@@ -2,13 +2,10 @@ package com.Movie.Movie_Web_App.Service;
 
 
 import java.util.List;
-
 import org.springframework.stereotype.Service;
-
 import com.Movie.Movie_Web_App.Entity.Role;
 import com.Movie.Movie_Web_App.Entity.User;
 import com.Movie.Movie_Web_App.Repository.UserRepository;
-
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
@@ -29,8 +26,12 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User registNewUser(User user)
+    public User RegisterNewUser(User user)
     {
+        if (userRepository.findByUsername(user.getUsername()).isPresent())
+            {
+                throw new RuntimeException("Username : "+user.getUsername()+" already exists!");
+            }
         return userRepository.save(user);
     }
     
