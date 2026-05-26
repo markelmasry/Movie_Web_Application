@@ -1,8 +1,10 @@
 package com.Movie.Movie_Web_App.Mapper;
 
+import org.springframework.stereotype.Component;
 import com.Movie.Movie_Web_App.Dto.MovieDto;
 import com.Movie.Movie_Web_App.Entity.Movie;
 
+@Component
 public class MoiveMapper {
     
     public MovieDto toDto(Movie movie)
