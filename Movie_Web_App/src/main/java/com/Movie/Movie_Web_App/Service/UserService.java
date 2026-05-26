@@ -1,10 +1,13 @@
 package com.Movie.Movie_Web_App.Service;
 
-
 import java.util.List;
 import org.springframework.stereotype.Service;
+import com.Movie.Movie_Web_App.Dto.UserDto;
 import com.Movie.Movie_Web_App.Entity.Role;
 import com.Movie.Movie_Web_App.Entity.User;
+import com.Movie.Movie_Web_App.ExceptionHandling.DuplicateResourceException;
+import com.Movie.Movie_Web_App.ExceptionHandling.ResourceNotFoundException;
+import com.Movie.Movie_Web_App.Mapper.UserMapper;
 import com.Movie.Movie_Web_App.Repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -14,30 +17,32 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    public User getUserByUsername(String username)
-    {   
-       return userRepository.findByUsername(username)
-       .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+    public UserDto getUserByUsername(String username){   
+       User user = userRepository.findByUsername(username)
+                                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));   
+       return userMapper.toDto(user);
     }
 
-    public List<User> getAllUsers()
-    {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsers(){
+        return userRepository.findAll()
+               .stream()
+               .map(userMapper::toDto)
+               .toList();
     }
 
-    public User RegisterNewUser(User user)
-    {
+    public UserDto RegisterNewUser(User user){
         if (userRepository.findByUsername(user.getUsername()).isPresent())
             {
-                throw new RuntimeException("Username : "+user.getUsername()+" already exists!");
+                throw new DuplicateResourceException("Username : "+user.getUsername()+" already exists!");
             }
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return userMapper.toDto(savedUser);
     }
     
     @PostConstruct
-    public void seedDatabase() 
-    {
+    public void seedDatabase() {
         if(userRepository.count()==0)
             {
                 User admin = User.builder()
@@ -55,6 +60,5 @@ public class UserService {
                 userRepository.saveAll(List.of(admin,regularUser));
                 System.out.println(">>> Database seeded with Admin and Regular User accounts.");
             }
-        
     }
 }

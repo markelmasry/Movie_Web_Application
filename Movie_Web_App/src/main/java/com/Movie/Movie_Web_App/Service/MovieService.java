@@ -2,7 +2,11 @@ package com.Movie.Movie_Web_App.Service;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import com.Movie.Movie_Web_App.Dto.MovieDto;
 import com.Movie.Movie_Web_App.Entity.Movie;
+import com.Movie.Movie_Web_App.ExceptionHandling.DuplicateResourceException;
+import com.Movie.Movie_Web_App.ExceptionHandling.ResourceNotFoundException;
+import com.Movie.Movie_Web_App.Mapper.MoiveMapper;
 import com.Movie.Movie_Web_App.Repository.MovieRepository;
 import lombok.AllArgsConstructor;
 
@@ -10,78 +14,67 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class MovieService {
 
-
     private final MovieRepository movierepository;
+    private final MoiveMapper moiveMapper;
 
-
-
-    // ==========================================
-    // 1. LOCAL DATABASE CUD (Admin Features)
-    // ==========================================
-    public Movie addMovie(Movie movie)
-    {
-         movierepository.findByImdbId(movie.getImdbId())
-        .ifPresent(existing ->{
-            throw new RuntimeException("Movie already exists: " + existing.getTitle());
-        });
-        
-        return movierepository.save(movie);
+    public MovieDto addMovie(MovieDto movie){
+        movierepository.findByImdbId(movie.getImdbId())
+                       .ifPresent(existing ->{ throw new DuplicateResourceException("Movie already exists: " + existing.getTitle());});
+        Movie savedMovie = movierepository.save(moiveMapper.toEntity(movie));
+        return moiveMapper.toDto(savedMovie);
     }
     
-    public Long deleteMovie(Long movieId)
-    {
-         return movierepository.findById(movieId)
-         .map(movie -> {
-           movierepository.delete(movie);
-           return movie.getId();
-          })
-         .orElseThrow(() -> new RuntimeException("Movie not found with ID: " + movieId));
-    
+    public Long deleteMovie(Long movieId){
+        Movie movie = movierepository.findById(movieId)
+                     .orElseThrow(() -> new ResourceNotFoundException("Movie not found with ID: " + movieId));
+        movierepository.delete(movie);
+        return movieId;
     }
 
-    public List<Movie> batchAddMovies(List<Movie> movies)
-    {
+    public List<MovieDto> batchAddMovies(List<MovieDto> moviesDto){
+        List<Movie> movies = moviesDto.stream()
+                                      .map(moiveMapper::toEntity)
+                                      .toList();
        for(Movie movie: movies)
        {
         movierepository.findByImdbId(movie.getImdbId())
-        .ifPresent(existing->{throw new RuntimeException("Movie already exists: " + existing.getTitle());  
-        });
+                       .ifPresent(existing->{throw new DuplicateResourceException("Movie already exists: " + existing.getTitle());});
        }
-        return movierepository.saveAll(movies);
+        movierepository.saveAll(movies);
+        return movies
+              .stream()
+              .map(moiveMapper::toDto)
+              .toList();
     }
 
-    public List<Long> batchDeleteMovies(List<Long> ids)
-    {
+    public List<Long> batchDeleteMovies(List<Long> ids){
         for(Long movieId : ids )
         {
            Movie movie = movierepository.findById(movieId)
-            .orElseThrow(() -> new RuntimeException("Movie not found with ID: " + movieId));
-           
+                                        .orElseThrow(() -> new ResourceNotFoundException("Movie not found with ID: " + movieId));
             movierepository.delete(movie);
         }
         return ids;
     }
 
-    public Movie getMovie(Long movieId)
-    {
-        return  movierepository.findById(movieId)
-                .orElseThrow(()->new RuntimeException("Movie not found with ID: " + movieId));
-
-
+    public MovieDto getMovie(Long movieId){
+        Movie movie=  movierepository.findById(movieId)
+                                     .orElseThrow(()->new ResourceNotFoundException("Movie not found with ID: " + movieId));
+        return moiveMapper.toDto(movie);
     }
 
-    public Movie rateMovie(Long movieId,Double rating)
-    {
+    public MovieDto rateMovie(Long movieId,Double rating){
         Movie movie= movierepository.findById(movieId)
-              .orElseThrow(()->new RuntimeException("Movie not found with ID: " + movieId));
-        
+                                    .orElseThrow(()->new ResourceNotFoundException("Movie not found with ID: " + movieId));
         movie.setUserRating(rating);
-        return movierepository.save(movie);
-
+        movierepository.save(movie);
+        return moiveMapper.toDto(movie);
     }
 
-    public List<Movie> getAllMovies()
-    {
-        return movierepository.findAll();
+    public List<MovieDto> getAllMovies(){
+        List<Movie> movies= movierepository.findAll();
+        return movies.stream()
+                     .map(moiveMapper::toDto)
+                     .toList();
     }
 }
