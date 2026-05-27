@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.Movie.Movie_Web_App.Dto.UserDto;
+import com.Movie.Movie_Web_App.Entity.Role;
 import com.Movie.Movie_Web_App.Entity.User;
 import com.Movie.Movie_Web_App.ExceptionHandling.DuplicateResourceException;
 import com.Movie.Movie_Web_App.ExceptionHandling.ResourceNotFoundException;
@@ -39,7 +40,20 @@ public class UserService {
                 throw new DuplicateResourceException("Username : "+user.getUsername()+" already exists!");
             }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setRole(Role.USER);
         User savedUser = userRepository.save(user);
+        
         return userMapper.toDto(savedUser);
+    }
+
+    public UserDto authenticateUser(String username, String rawPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid username or password."));
+
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new ResourceNotFoundException("Invalid username or password.");
+        }
+       
+        return userMapper.toDto(user);
     }
 }

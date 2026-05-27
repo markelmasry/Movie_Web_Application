@@ -1,5 +1,6 @@
 package com.Movie.Movie_Web_App.Security;
 
+import java.util.Arrays;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,7 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
+import org.springframework.web.cors.CorsConfiguration;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -25,7 +26,16 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http
+            .cors(cors -> cors.configurationSource(request -> {
+                CorsConfiguration cfg = new CorsConfiguration();
+                cfg.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+                cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                cfg.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+                cfg.setAllowCredentials(true);
+                return cfg;
+        }))
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/api/Movies/search/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/Movies/AllMovies").hasAnyRole("USER", "ADMIN")
@@ -35,6 +45,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/users/all").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/users/{username}").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                 
                 .anyRequest().authenticated()
             )
@@ -47,4 +58,5 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
 }

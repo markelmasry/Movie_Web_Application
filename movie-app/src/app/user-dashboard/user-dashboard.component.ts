@@ -1,0 +1,193 @@
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { MovieService } from '../movie.service';
+
+@Component({
+  selector: 'app-user-dashboard',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="app-container">
+      <div class="toast" [class.show]="toastMsg">{{toastMsg}}</div>
+
+      <div class="custom-modal-overlay" *ngIf="showLogoutModal">
+        <div class="custom-modal">
+          <h3>Sign Out</h3>
+          <p>Are you sure you want to leave Netflix?</p>
+          <div class="modal-actions">
+            <button class="modal-btn secondary" (click)="showLogoutModal = false">Cancel</button>
+            <button class="modal-btn primary" (click)="confirmLogout()">Sign Out</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="custom-modal-overlay" *ngIf="showMyListModal">
+        <div class="custom-modal list-modal">
+          <h3>My Watchlist</h3>
+          <p *ngIf="myList.length === 0" style="color:#888;">Your list is empty. Add movies using the + button.</p>
+          <ul class="watch-list" *ngIf="myList.length > 0">
+             <li *ngFor="let item of myList">🎬 {{item}}</li>
+          </ul>
+          <div class="modal-actions">
+            <button class="modal-btn secondary" (click)="showMyListModal = false" style="width:100%">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <nav class="navbar" [class.scrolled]="isScrolled">
+        <div class="nav-left">
+          <h1 class="logo">NETFLIX<span class="sub" style="color: white; font-size: 1rem;">-ish</span></h1>
+          <span class="nav-link active">Home</span>
+          <span class="nav-link" (click)="showMyListModal = true">My List</span>
+        </div>
+        <div class="nav-right" style="display: flex; gap: 20px; align-items: center;">
+          <input [(ngModel)]="searchTerm" (input)="filterMovies()" placeholder="🔍 Titles..." class="search-input">
+          <button (click)="showLogoutModal = true" class="sign-out-btn">Sign Out</button>
+        </div>
+      </nav>
+
+      <div class="hero-section">
+        <div class="hero-overlay">
+          <div class="hero-content">
+            <h1 class="hero-title">INTERSTELLAR</h1>
+            <p class="hero-desc">A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.</p>
+            <div class="hero-btns">
+              <button class="play-btn" (click)="playMovie('Interstellar')">▶ Play</button>
+              <button class="more-info-btn" (click)="addToList('Interstellar')">+ My List</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h2 class="row-header">Trending in Your Collection</h2>
+        <div class="movie-grid">
+          <div *ngFor="let movie of filteredMovies" class="movie-card">
+            <img [src]="movie.poster" class="poster" onerror="this.src='https://placehold.co/200x300/222/fff?text=No+Poster'">
+            <div class="card-details">
+              <div class="action-row">
+                <button class="circle-btn" (click)="playMovie(movie.title)">▶</button>
+                <button class="circle-btn" (click)="addToList(movie.title)">+</button>
+              </div>
+              <h4 class="card-title">{{movie.title}}</h4>
+              <span class="match-text">{{movie.year}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .app-container { background: #0a0a0a; color: white; min-height: 100vh; font-family: Helvetica, sans-serif; overflow-x: hidden; }
+    
+    /* TOAST STYLES */
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(229, 9, 20, 0.9); color: white; padding: 12px 25px; border-radius: 4px; font-weight: bold; z-index: 9999; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px); pointer-events: none; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* MODAL STYLES */
+    .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(5px); }
+    .custom-modal { background: #141414; border: 1px solid #333; padding: 30px; border-radius: 8px; width: 350px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.8); animation: popIn 0.3s ease; }
+    .custom-modal h3 { margin-top: 0; font-size: 1.5rem; color: #fff; }
+    .custom-modal p { color: #aaa; margin-bottom: 25px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 15px; justify-content: center; }
+    .modal-btn { padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; flex: 1; transition: 0.2s; }
+    .modal-btn.secondary { background: #333; color: white; border: 1px solid #555; }
+    .modal-btn.secondary:hover { background: #444; }
+    .modal-btn.primary { background: #E50914; color: white; }
+    .modal-btn.primary:hover { background: #f40612; }
+    .watch-list { list-style: none; padding: 0; margin: 0 0 25px 0; text-align: left; max-height: 200px; overflow-y: auto; }
+    .watch-list li { padding: 10px; border-bottom: 1px solid #222; color: #ddd; }
+    
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* NAVBAR & DASHBOARD STYLES */
+    .navbar { position: fixed; top: 0; width: 100%; padding: 20px 4%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transition: background 0.4s ease; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); box-sizing: border-box; }
+    .navbar.scrolled { background: #141414; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .logo { color: #E50914; font-size: 1.8rem; margin: 0; font-weight: bold; }
+    .nav-left { display: flex; align-items: center; gap: 30px; }
+    .nav-link { font-size: 0.9rem; cursor: pointer; color: #e5e5e5; transition: color 0.3s; }
+    .nav-link:hover { color: #b3b3b3; }
+    .nav-link.active { font-weight: bold; color: #fff; }
+    .search-input { padding: 8px 15px; background: rgba(0,0,0,0.6); border: 1px solid #fff; color: white; border-radius: 4px; width: 150px; transition: 0.3s; }
+    .search-input:focus { width: 220px; outline: none; background: rgba(0,0,0,0.8); }
+    .sign-out-btn { background: transparent; border: 1px solid #fff; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    .sign-out-btn:hover { background: white; color: black; }
+    .hero-section { height: 85vh; background: url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=2000') center/cover; position: relative; }
+    .hero-overlay { height: 100%; background: linear-gradient(to right, #0a0a0a 10%, transparent 70%), linear-gradient(to top, #0a0a0a, transparent 30%); display: flex; align-items: center; padding-left: 4%; }
+    .hero-content { margin-top: 50px; }
+    .hero-title { font-size: 4rem; font-weight: 900; margin-bottom: 20px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+    .hero-desc { max-width: 500px; font-size: 1.2rem; line-height: 1.4; margin-bottom: 25px; color: #fff; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); font-weight: 500; }
+    .play-btn { padding: 10px 30px; background: white; color: black; border: none; border-radius: 4px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+    .play-btn:hover { background: rgba(255,255,255,0.7); }
+    .more-info-btn { padding: 10px 30px; background: rgba(109, 109, 110, 0.7); color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-left: 10px; transition: 0.2s; }
+    .more-info-btn:hover { background: rgba(109, 109, 110, 0.4); }
+    .row { padding: 0 4%; margin-top: -80px; position: relative; z-index: 10; padding-bottom: 50px; }
+    .row-header { font-size: 1.4rem; margin-bottom: 15px; }
+    .movie-grid { display: flex; gap: 15px; overflow-x: auto; padding: 20px 0; scrollbar-width: none; }
+    .movie-grid::-webkit-scrollbar { display: none; }
+    .movie-card { flex: 0 0 220px; height: 330px; position: relative; border-radius: 4px; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); cursor: pointer; background: #181818; }
+    .movie-card:hover { transform: scale(1.15); z-index: 50; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
+    .poster { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+    .card-details { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9) 50%, transparent); padding: 20px 15px 15px; opacity: 0; transition: opacity 0.3s; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; box-sizing: border-box; }
+    .movie-card:hover .card-details { opacity: 1; }
+    .action-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .circle-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.5); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: 0.2s; }
+    .circle-btn:hover { border-color: white; background: white; color: black; }
+    .card-title { margin: 0 0 5px 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
+    .match-text { color: #46d369; font-weight: bold; font-size: 0.8rem; }
+  `]
+})
+export class UserDashboardComponent implements OnInit {
+  movies: any[] = [];
+  filteredMovies: any[] = [];
+  searchTerm: string = '';
+  isScrolled: boolean = false;
+  myList: string[] = []; 
+  
+  // Custom UI States
+  toastMsg = '';
+  showLogoutModal = false;
+  showMyListModal = false;
+
+  constructor(private movieService: MovieService, private router: Router, private cdr: ChangeDetectorRef) {}
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() { this.isScrolled = window.scrollY > 50; }
+
+  ngOnInit() { this.loadMovies(); }
+
+  loadMovies() {
+    this.movieService.getMovies().subscribe({
+      next: (data) => { this.movies = data; this.filteredMovies = data; this.cdr.detectChanges(); },
+      error: (err) => this.showToast("Connection to backend failed.")
+    });
+  }
+
+  filterMovies() {
+    this.filteredMovies = this.movies.filter(m => m.title.toLowerCase().includes(this.searchTerm.toLowerCase()));
+  }
+
+  showToast(msg: string) {
+    this.toastMsg = msg;
+    setTimeout(() => { this.toastMsg = ''; }, 3000);
+  }
+
+  playMovie(title: string) {
+    this.showToast(`🎬 Preparing to stream: ${title}`);
+  }
+
+  addToList(title: string) {
+    if (!this.myList.includes(title)) {
+      this.myList.push(title);
+      this.showToast(`✅ Added '${title}' to your list`);
+    } else {
+      this.showToast(`ℹ️ '${title}' is already saved`);
+    }
+  }
+
+  confirmLogout() {
+    this.router.navigate(['/login']);
+  }
+}
