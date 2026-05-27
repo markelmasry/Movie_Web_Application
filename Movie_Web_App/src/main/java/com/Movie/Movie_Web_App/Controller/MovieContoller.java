@@ -2,6 +2,7 @@ package com.Movie.Movie_Web_App.Controller;
 
 import org.springframework.web.bind.annotation.RestController;
 import com.Movie.Movie_Web_App.Dto.MovieDto;
+import com.Movie.Movie_Web_App.Dto.OmdbMovieItemResponse;
 import com.Movie.Movie_Web_App.Dto.OmdbResponse;
 import com.Movie.Movie_Web_App.Service.MovieService;
 import lombok.AllArgsConstructor;
@@ -27,6 +28,10 @@ public class MovieContoller {
     @GetMapping("/search/{title}")
     public ResponseEntity<OmdbResponse> search(@PathVariable String title) {
         return ResponseEntity.ok(movieService.searchOmdb(title));
+    }
+    @GetMapping("/MovieDetails/{imdbId}")
+    public ResponseEntity<OmdbMovieItemResponse> getDetails(@PathVariable String imdbId) {
+        return ResponseEntity.ok(movieService.getMovieDetails(imdbId));
     }
 
     @GetMapping

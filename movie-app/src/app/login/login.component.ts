@@ -66,18 +66,19 @@ export class LoginComponent {
   password = '';
   isSignUp = false;
   toastMsg = '';
-private toastTimeout: any;
-  constructor(private router: Router, private authService: AuthService,private cdr: ChangeDetectorRef) {}
+  private toastTimeout: any;
+  
+  constructor(private router: Router, private authService: AuthService, private cdr: ChangeDetectorRef) {}
 
   showToast(msg: string) {
-    // 3. Prevent "ghosting" by cancelling the old timer if a new message comes in
+    // Prevent "ghosting" by cancelling the old timer if a new message comes in
     if (this.toastTimeout) {
       clearTimeout(this.toastTimeout);
     }
 
     this.toastMsg = msg;
     
-    // 4. WAKE UP ANGULAR! Force the screen to show the message immediately
+    // WAKE UP ANGULAR! Force the screen to show the message immediately
     this.cdr.detectChanges(); 
 
     this.toastTimeout = setTimeout(() => { 
@@ -90,47 +91,50 @@ private toastTimeout: any;
     this.isSignUp = !this.isSignUp;
   }
 
-onSubmit(event: Event) {
-  event.preventDefault();
+  onSubmit(event: Event) {
+    event.preventDefault();
 
-  if (this.isSignUp) {
-    // FIX: Actually call the database!
-    const userData = { username: this.email, password: this.password }; // Using email field as username
-    
-    this.authService.register(userData).subscribe({
-      next: (response) => {
-        this.showToast("Account saved to database! Please sign in.");
-        this.isSignUp = false; // Switch to login mode
+    if (this.isSignUp) {
+      const userData = { username: this.email, password: this.password }; 
+      
+      this.authService.register(userData).subscribe({
+        next: (response: any) => { 
+          this.showToast("Account saved to database! Please sign in.");
+          this.isSignUp = false; 
+        },
+        error: (err: any) => { // FIXED: Added :any to resolve TS7006
+          this.showToast("Registration failed: Username might already exist.");
+        }
+      });
+      return;
+    }
+
+    // LOGIN LOGIC 
+    this.authService.login({ username: this.email, password: this.password }).subscribe({
+      next: (user: any) => { 
+        this.showToast(`Welcome back, ${user.username}`);
+        
+        // 1. Create the Basic Auth string dynamically based on who just logged in
+        const authString = 'Basic ' + btoa(this.email + ':' + this.password);
+        
+        // 2. Save it to the browser's memory
+        localStorage.setItem('authCredentials', authString);
+        localStorage.setItem('userRole', user.role); 
+
+        // 3. Route them based on their role
+        const isAdmin = user.role === 'ROLE_ADMIN' || 
+                        user.role === 'ADMIN' || 
+                        user.username?.toLowerCase() === 'admin';
+
+        if (isAdmin) {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/user']);
+        }
       },
-      error: (err) => {
-        this.showToast("Registration failed: Username might already exist.");
+      error: (err: any) => { // FIXED: Added :any to resolve TS7006
+        this.showToast('Invalid username or password.');
       }
     });
-    return; // Stop here so it doesn't try to log in immediately
   }
-
-  // LOGIN LOGIC (Existing)
-  this.authService.login({ username: this.email, password: this.password }).subscribe({
-  next: (user) => {
-    this.showToast(`Welcome back, ${user.username}`);
-    
-    // 1. Create the Basic Auth string dynamically based on who just logged in
-    const authString = 'Basic ' + btoa(this.email + ':' + this.password);
-    
-    // 2. Save it to the browser's memory
-    localStorage.setItem('authCredentials', authString);
-    localStorage.setItem('userRole', user.role); // Assuming your backend returns the role
-
-    // 3. Route them based on their role
-    if (user.role === 'ROLE_ADMIN' || user?.username?.toLowerCase() === 'admin') {
-      this.router.navigate(['/admin']);
-    } else {
-      this.router.navigate(['/user']);
-    }
-  },
-  error: () => {
-    this.showToast('Invalid username or password.');
-  }
-});
-}
 }

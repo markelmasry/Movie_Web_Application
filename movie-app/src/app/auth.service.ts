@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http'; // ADD HttpHeaders HERE
+import { HttpClient, HttpHeaders } from '@angular/common/http'; 
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -19,12 +19,12 @@ export class AuthService {
   }
 
   getAllUsers(): Observable<any[]> {
-  const savedCredentials = localStorage.getItem('authCredentials') || '';
+    const savedCredentials = localStorage.getItem('authCredentials') || '';
 
-  const headers = new HttpHeaders({
-    'Authorization': savedCredentials
-  });
-  
-  return this.http.get<any[]>(`${this.apiUrl}/all`, { headers });
-}
+    const headers = new HttpHeaders({
+      'Authorization': savedCredentials
+    });
+    
+    return this.http.get<any[]>(`${this.apiUrl}/all`, { headers });
+  }
 }

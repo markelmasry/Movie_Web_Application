@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.Movie.Movie_Web_App.Dto.MovieDto;
+import com.Movie.Movie_Web_App.Dto.OmdbMovieItemResponse;
 import com.Movie.Movie_Web_App.Dto.OmdbResponse;
 import com.Movie.Movie_Web_App.Entity.Movie;
 import com.Movie.Movie_Web_App.ExceptionHandling.DuplicateResourceException;
@@ -26,7 +27,7 @@ public class MovieService {
 
 public OmdbResponse searchOmdb(String title) {
     try {
-        String url = "https://www.omdbapi.com/?t=" + title + "&apikey=" + apiKey;
+        String url = "https://www.omdbapi.com/?s=" + title + "&apikey=" + apiKey;
         System.out.println("Calling URL: " + url); // Debug: See the actual URL being called
         
         return restTemplate.getForObject(url, OmdbResponse.class);
@@ -34,6 +35,12 @@ public OmdbResponse searchOmdb(String title) {
         e.printStackTrace(); // THIS prints the real reason in RED in your console
         throw e;
     }
+}
+// In MovieService.java
+public OmdbMovieItemResponse getMovieDetails(String imdbId) {
+    // We use 'i=' to get the full details for a specific ID
+    String url = "https://www.omdbapi.com/?i=" + imdbId + "&plot=full&apikey=" + apiKey;
+    return restTemplate.getForObject(url, OmdbMovieItemResponse.class);
 }
 
     public MovieDto addMovie(MovieDto movie){

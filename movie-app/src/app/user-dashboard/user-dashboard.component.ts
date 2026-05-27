@@ -23,6 +23,40 @@ import { MovieService } from '../movie.service';
         </div>
       </div>
 
+      <div class="custom-modal-overlay" *ngIf="showDetailsModal">
+        <div class="custom-modal details-modal">
+          <button class="close-details-btn" (click)="closeDetails()">✖</button>
+          
+          <div class="details-layout">
+            <div class="details-poster-container">
+              <img [src]="selectedMovie?.poster" class="details-poster" onerror="this.src='https://placehold.co/300x450/222/fff?text=No+Poster'">
+            </div>
+            
+            <div class="details-content">
+              <h2 class="details-title">{{selectedMovie?.title}}</h2>
+              <div class="details-meta">
+                <span class="match-text">★ {{selectedMovie?.userRating || 'N/A'}} / 10</span>
+                <span class="year-text">{{selectedMovie?.movieYear}}</span>
+                <span class="hd-badge">{{selectedMovie?.genre || 'Action'}}</span>
+              </div>
+              
+              <p class="details-director" *ngIf="selectedMovie?.director">
+                <strong>Director:</strong> {{selectedMovie?.director}}
+              </p>
+              
+              <p class="details-desc">
+                {{ selectedMovie?.plot || 'No plot description available for this title.' }}
+              </p>
+              
+              <div class="details-actions">
+                <button class="play-btn" style="padding: 10px 25px; font-size: 1rem;" (click)="playMovie(selectedMovie?.title); closeDetails()">▶ Play</button>
+                <button class="circle-btn" style="width: 40px; height: 40px; font-size: 1.2rem;" (click)="addToList(selectedMovie?.title)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="video-overlay" *ngIf="showVideoPlayer">
         <button class="close-video-btn" (click)="closeVideo()">✖ Close</button>
         <div class="video-wrapper">
@@ -35,7 +69,7 @@ import { MovieService } from '../movie.service';
 
       <nav class="navbar" [class.scrolled]="isScrolled || viewMode === 'list'">
         <div class="nav-left">
-          <h1 class="logo" style="cursor: pointer;" (click)="viewMode = 'home'">NETFLIX<span class="sub" style="color: white; font-size: 1rem;"></span></h1>
+          <h1 class="logo" style="cursor: pointer;" (click)="viewMode = 'home'">NETFLIX</h1>
           <span class="nav-link" [class.active]="viewMode === 'home'" (click)="viewMode = 'home'">Home</span>
           <span class="nav-link" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">My List</span>
         </div>
@@ -49,11 +83,11 @@ import { MovieService } from '../movie.service';
         <div class="hero-section">
           <div class="hero-overlay">
             <div class="hero-content">
-              <h1 class="hero-title">INTERSTELLAR</h1>
-              <p class="hero-desc">A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.</p>
+              <h1 class="hero-title">GUARDIANS OF THE GALAXY</h1>
+              <p class="hero-desc">The Guardians struggle to keep together as a team while dealing with their personal family issues, notably Star-Lord's encounter with his father.</p>
               <div class="hero-btns">
-                <button class="play-btn" (click)="playMovie('Interstellar')">▶ Play</button>
-                <button class="more-info-btn" (click)="addToList('Interstellar')">+ My List</button>
+                <button class="play-btn" (click)="playMovie('Guardians of the Galaxy: Vol. 2')">▶ Play</button>
+                <button class="more-info-btn" (click)="openDetails({title: 'Guardians of the Galaxy: Vol. 2', movieYear: '2017', genre: 'Action, Adventure, Comedy', director: 'James Gunn', plot: 'The Guardians struggle to keep together as a team while dealing with their personal family issues...', poster: 'https://m.media-amazon.com/images/M/MV5BNWE5MGI3MDctMmU5Ni00YzI2LWEzMTQtZGIyZDA5MzQzNDBhXkEyXkFqcGc@._V1_QL75_UX380_CR0,1,380,562_.jpg', userRating: 7.6})">ℹ More Info</button>
               </div>
             </div>
           </div>
@@ -66,11 +100,12 @@ import { MovieService } from '../movie.service';
               <img [src]="movie.poster" class="poster" onerror="this.src='https://placehold.co/200x300/222/fff?text=No+Poster'">
               <div class="card-details">
                 <div class="action-row">
-                  <button class="circle-btn" (click)="playMovie(movie.title)">▶</button>
-                  <button class="circle-btn" (click)="addToList(movie.title)">+</button>
+                  <button class="circle-btn" title="Play" (click)="playMovie(movie.title)">▶</button>
+                  <button class="circle-btn" title="Add to List" (click)="addToList(movie.title)">+</button>
+                  <button class="circle-btn info-btn" title="More Info" (click)="openDetails(movie)">ℹ</button>
                 </div>
                 <h4 class="card-title">{{movie.title}}</h4>
-                <span class="match-text">{{movie.year}}</span>
+                <span class="match-text">{{movie.movieYear}}</span>
               </div>
             </div>
           </div>
@@ -90,11 +125,12 @@ import { MovieService } from '../movie.service';
             <img [src]="movie.poster" class="poster" onerror="this.src='https://placehold.co/200x300/222/fff?text=No+Poster'">
             <div class="card-details">
               <div class="action-row">
-                <button class="circle-btn" (click)="playMovie(movie.title)">▶</button>
-                <button class="circle-btn" (click)="removeFromList(movie.title)">✖</button>
+                <button class="circle-btn" title="Play" (click)="playMovie(movie.title)">▶</button>
+                <button class="circle-btn" title="Remove" (click)="removeFromList(movie.title)">✖</button>
+                <button class="circle-btn info-btn" title="More Info" (click)="openDetails(movie)">ℹ</button>
               </div>
               <h4 class="card-title">{{movie.title}}</h4>
-              <span class="match-text">{{movie.year}}</span>
+              <span class="match-text">{{movie.movieYear}}</span>
             </div>
           </div>
         </div>
@@ -109,9 +145,9 @@ import { MovieService } from '../movie.service';
     .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(229, 9, 20, 0.9); color: white; padding: 12px 25px; border-radius: 4px; font-weight: bold; z-index: 9999; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px); pointer-events: none; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    /* MODAL STYLES */
+    /* GENERIC MODAL STYLES */
     .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(5px); }
-    .custom-modal { background: #141414; border: 1px solid #333; padding: 30px; border-radius: 8px; width: 350px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.8); animation: popIn 0.3s ease; }
+    .custom-modal { background: #141414; border: 1px solid #333; padding: 30px; border-radius: 8px; width: 350px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.8); animation: popIn 0.3s ease; position: relative; }
     .custom-modal h3 { margin-top: 0; font-size: 1.5rem; color: #fff; }
     .custom-modal p { color: #aaa; margin-bottom: 25px; line-height: 1.5; }
     .modal-actions { display: flex; gap: 15px; justify-content: center; }
@@ -120,10 +156,24 @@ import { MovieService } from '../movie.service';
     .modal-btn.secondary:hover { background: #444; }
     .modal-btn.primary { background: #E50914; color: white; }
     .modal-btn.primary:hover { background: #f40612; }
-    
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    /* NAVBAR & DASHBOARD STYLES */
+    /* MOVIE DETAILS MODAL (SIDE-BY-SIDE) */
+    .details-modal { width: 750px; padding: 0; overflow: hidden; text-align: left; background: #181818; }
+    .close-details-btn { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: 2px solid white; border-radius: 50%; width: 35px; height: 35px; font-size: 1rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .close-details-btn:hover { background: white; color: black; }
+    .details-layout { display: flex; min-height: 400px; }
+    .details-poster-container { flex: 0 0 300px; background: #111; }
+    .details-poster { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .details-content { flex: 1; padding: 40px 30px; display: flex; flex-direction: column; justify-content: center; }
+    .details-title { font-size: 2.2rem; margin: 0 0 10px 0; font-weight: 800; line-height: 1.1; }
+    .details-meta { display: flex; gap: 12px; align-items: center; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; flex-wrap: wrap; }
+    .hd-badge { border: 1px solid #aaa; padding: 2px 6px; border-radius: 3px; font-size: 0.75rem; color: #aaa; }
+    .details-director { font-size: 0.9rem; color: #bbb; margin: 0 0 15px 0; }
+    .details-desc { color: #ddd; line-height: 1.6; font-size: 1rem; margin-bottom: 30px; }
+    .details-actions { display: flex; gap: 15px; align-items: center; margin-top: auto; }
+
+    /* NAVBAR */
     .navbar { position: fixed; top: 0; width: 100%; padding: 20px 4%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transition: background 0.4s ease; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); box-sizing: border-box; }
     .navbar.scrolled { background: #141414; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
     .logo { color: #E50914; font-size: 1.8rem; margin: 0; font-weight: bold; }
@@ -137,7 +187,7 @@ import { MovieService } from '../movie.service';
     .sign-out-btn:hover { background: white; color: black; }
     
     /* HERO */
-    .hero-section { height: 85vh; background: url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=2000') center/cover; position: relative; }
+    .hero-section { height: 85vh; background: url('https://images.unsplash.com/photo-1534809027769-b00d750a6bac?q=80&w=2000') center/cover; position: relative; }
     .hero-overlay { height: 100%; background: linear-gradient(to right, #0a0a0a 10%, transparent 70%), linear-gradient(to top, #0a0a0a, transparent 30%); display: flex; align-items: center; padding-left: 4%; }
     .hero-content { margin-top: 50px; }
     .hero-title { font-size: 4rem; font-weight: 900; margin-bottom: 20px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
@@ -160,10 +210,11 @@ import { MovieService } from '../movie.service';
     .action-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .circle-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.5); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: 0.2s; }
     .circle-btn:hover { border-color: white; background: white; color: black; }
+    .info-btn { margin-left: auto; border-color: rgba(255,255,255,0.4); } 
     .card-title { margin: 0 0 5px 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
     .match-text { color: #46d369; font-weight: bold; font-size: 0.8rem; }
 
-    /* MY LIST PAGE (NEW) */
+    /* MY LIST PAGE */
     .list-page { padding: 100px 4% 50px 4%; min-height: 100vh; animation: popIn 0.3s ease; }
     .empty-state { text-align: center; margin-top: 50px; }
     .wrap-grid { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; }
@@ -181,12 +232,17 @@ export class UserDashboardComponent implements OnInit {
   filteredMovies: any[] = [];
   searchTerm: string = '';
   isScrolled: boolean = false;
+  
+  // Stores titles to track what is saved
   myList: string[] = []; 
   
-  // Custom UI States
-  viewMode: 'home' | 'list' = 'home'; // Replaced showMyListModal with viewMode
+  viewMode: 'home' | 'list' = 'home'; 
   toastMsg = '';
   showLogoutModal = false;
+
+  // Details Modal States
+  showDetailsModal = false;
+  selectedMovie: any = null;
 
   // Video Player States
   showVideoPlayer = false;
@@ -201,12 +257,15 @@ export class UserDashboardComponent implements OnInit {
 
   loadMovies() {
     this.movieService.getMovies().subscribe({
-      next: (data) => { this.movies = data; this.filteredMovies = data; this.cdr.detectChanges(); },
+      next: (data) => { 
+        this.movies = data; 
+        this.filteredMovies = data; 
+        this.cdr.detectChanges(); 
+      },
       error: (err) => this.showToast("Connection to backend failed.")
     });
   }
 
-  // NEW: Maps the text list to full movie objects so cards can display posters
   getWatchlistMovies() {
     return this.movies.filter(m => this.myList.includes(m.title));
   }
@@ -240,10 +299,19 @@ export class UserDashboardComponent implements OnInit {
     }
   }
 
-  // NEW: Allows removal from the My List page
   removeFromList(title: string) {
     this.myList = this.myList.filter(item => item !== title);
     this.showToast(`🗑️ Removed '${title}'`);
+  }
+
+  openDetails(movie: any) {
+    this.selectedMovie = movie;
+    this.showDetailsModal = true;
+  }
+
+  closeDetails() {
+    this.showDetailsModal = false;
+    setTimeout(() => { this.selectedMovie = null; }, 300);
   }
 
   confirmLogout() {
