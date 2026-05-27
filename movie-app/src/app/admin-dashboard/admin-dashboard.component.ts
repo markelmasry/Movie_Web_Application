@@ -40,7 +40,6 @@ import { AuthService } from '../auth.service';
       <aside class="sidebar">
         <h2 class="logo">CONTROL<span style="color: #E50914;">.</span></h2>
         <div class="menu-item" [class.active]="activeTab === 'catalog'" (click)="setTab('catalog')">🎬 Catalog</div>
-        <div class="menu-item" [class.active]="activeTab === 'analytics'" (click)="setTab('analytics')">📊 Analytics</div>
         <div class="menu-item" [class.active]="activeTab === 'users'" (click)="setTab('users')">👤 Users</div>
         <div class="menu-item logout" (click)="showLogoutModal = true">🚪 Sign Out</div>
       </aside>

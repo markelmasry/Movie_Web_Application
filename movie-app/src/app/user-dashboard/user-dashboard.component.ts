@@ -23,24 +23,21 @@ import { MovieService } from '../movie.service';
         </div>
       </div>
 
-      <div class="custom-modal-overlay" *ngIf="showMyListModal">
-        <div class="custom-modal list-modal">
-          <h3>My Watchlist</h3>
-          <p *ngIf="myList.length === 0" style="color:#888;">Your list is empty. Add movies using the + button.</p>
-          <ul class="watch-list" *ngIf="myList.length > 0">
-             <li *ngFor="let item of myList">🎬 {{item}}</li>
-          </ul>
-          <div class="modal-actions">
-            <button class="modal-btn secondary" (click)="showMyListModal = false" style="width:100%">Close</button>
-          </div>
+      <div class="video-overlay" *ngIf="showVideoPlayer">
+        <button class="close-video-btn" (click)="closeVideo()">✖ Close</button>
+        <div class="video-wrapper">
+          <video width="100%" controls autoplay>
+            <source [src]="currentVideoUrl" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
         </div>
       </div>
 
-      <nav class="navbar" [class.scrolled]="isScrolled">
+      <nav class="navbar" [class.scrolled]="isScrolled || viewMode === 'list'">
         <div class="nav-left">
-          <h1 class="logo">NETFLIX<span class="sub" style="color: white; font-size: 1rem;">-ish</span></h1>
-          <span class="nav-link active">Home</span>
-          <span class="nav-link" (click)="showMyListModal = true">My List</span>
+          <h1 class="logo" style="cursor: pointer;" (click)="viewMode = 'home'">NETFLIX<span class="sub" style="color: white; font-size: 1rem;"></span></h1>
+          <span class="nav-link" [class.active]="viewMode === 'home'" (click)="viewMode = 'home'">Home</span>
+          <span class="nav-link" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">My List</span>
         </div>
         <div class="nav-right" style="display: flex; gap: 20px; align-items: center;">
           <input [(ngModel)]="searchTerm" (input)="filterMovies()" placeholder="🔍 Titles..." class="search-input">
@@ -48,28 +45,53 @@ import { MovieService } from '../movie.service';
         </div>
       </nav>
 
-      <div class="hero-section">
-        <div class="hero-overlay">
-          <div class="hero-content">
-            <h1 class="hero-title">INTERSTELLAR</h1>
-            <p class="hero-desc">A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.</p>
-            <div class="hero-btns">
-              <button class="play-btn" (click)="playMovie('Interstellar')">▶ Play</button>
-              <button class="more-info-btn" (click)="addToList('Interstellar')">+ My List</button>
+      <div *ngIf="viewMode === 'home'">
+        <div class="hero-section">
+          <div class="hero-overlay">
+            <div class="hero-content">
+              <h1 class="hero-title">INTERSTELLAR</h1>
+              <p class="hero-desc">A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.</p>
+              <div class="hero-btns">
+                <button class="play-btn" (click)="playMovie('Interstellar')">▶ Play</button>
+                <button class="more-info-btn" (click)="addToList('Interstellar')">+ My List</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <h2 class="row-header">Trending in Your Collection</h2>
+          <div class="movie-grid">
+            <div *ngFor="let movie of filteredMovies" class="movie-card">
+              <img [src]="movie.poster" class="poster" onerror="this.src='https://placehold.co/200x300/222/fff?text=No+Poster'">
+              <div class="card-details">
+                <div class="action-row">
+                  <button class="circle-btn" (click)="playMovie(movie.title)">▶</button>
+                  <button class="circle-btn" (click)="addToList(movie.title)">+</button>
+                </div>
+                <h4 class="card-title">{{movie.title}}</h4>
+                <span class="match-text">{{movie.year}}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="row">
-        <h2 class="row-header">Trending in Your Collection</h2>
-        <div class="movie-grid">
-          <div *ngFor="let movie of filteredMovies" class="movie-card">
+      <div class="list-page" *ngIf="viewMode === 'list'">
+        <h2 class="row-header">My Watchlist</h2>
+        
+        <div class="empty-state" *ngIf="myList.length === 0">
+          <p style="color:#888; font-size: 1.2rem;">Your list is empty. Add movies using the + button.</p>
+          <button class="modal-btn secondary" (click)="viewMode = 'home'" style="margin-top: 15px;">Browse Movies</button>
+        </div>
+
+        <div class="movie-grid wrap-grid" *ngIf="myList.length > 0">
+          <div *ngFor="let movie of getWatchlistMovies()" class="movie-card">
             <img [src]="movie.poster" class="poster" onerror="this.src='https://placehold.co/200x300/222/fff?text=No+Poster'">
             <div class="card-details">
               <div class="action-row">
                 <button class="circle-btn" (click)="playMovie(movie.title)">▶</button>
-                <button class="circle-btn" (click)="addToList(movie.title)">+</button>
+                <button class="circle-btn" (click)="removeFromList(movie.title)">✖</button>
               </div>
               <h4 class="card-title">{{movie.title}}</h4>
               <span class="match-text">{{movie.year}}</span>
@@ -77,6 +99,7 @@ import { MovieService } from '../movie.service';
           </div>
         </div>
       </div>
+
     </div>
   `,
   styles: [`
@@ -97,8 +120,6 @@ import { MovieService } from '../movie.service';
     .modal-btn.secondary:hover { background: #444; }
     .modal-btn.primary { background: #E50914; color: white; }
     .modal-btn.primary:hover { background: #f40612; }
-    .watch-list { list-style: none; padding: 0; margin: 0 0 25px 0; text-align: left; max-height: 200px; overflow-y: auto; }
-    .watch-list li { padding: 10px; border-bottom: 1px solid #222; color: #ddd; }
     
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
@@ -114,6 +135,8 @@ import { MovieService } from '../movie.service';
     .search-input:focus { width: 220px; outline: none; background: rgba(0,0,0,0.8); }
     .sign-out-btn { background: transparent; border: 1px solid #fff; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
     .sign-out-btn:hover { background: white; color: black; }
+    
+    /* HERO */
     .hero-section { height: 85vh; background: url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=2000') center/cover; position: relative; }
     .hero-overlay { height: 100%; background: linear-gradient(to right, #0a0a0a 10%, transparent 70%), linear-gradient(to top, #0a0a0a, transparent 30%); display: flex; align-items: center; padding-left: 4%; }
     .hero-content { margin-top: 50px; }
@@ -123,6 +146,8 @@ import { MovieService } from '../movie.service';
     .play-btn:hover { background: rgba(255,255,255,0.7); }
     .more-info-btn { padding: 10px 30px; background: rgba(109, 109, 110, 0.7); color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-left: 10px; transition: 0.2s; }
     .more-info-btn:hover { background: rgba(109, 109, 110, 0.4); }
+    
+    /* MOVIE GRID */
     .row { padding: 0 4%; margin-top: -80px; position: relative; z-index: 10; padding-bottom: 50px; }
     .row-header { font-size: 1.4rem; margin-bottom: 15px; }
     .movie-grid { display: flex; gap: 15px; overflow-x: auto; padding: 20px 0; scrollbar-width: none; }
@@ -137,6 +162,18 @@ import { MovieService } from '../movie.service';
     .circle-btn:hover { border-color: white; background: white; color: black; }
     .card-title { margin: 0 0 5px 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
     .match-text { color: #46d369; font-weight: bold; font-size: 0.8rem; }
+
+    /* MY LIST PAGE (NEW) */
+    .list-page { padding: 100px 4% 50px 4%; min-height: 100vh; animation: popIn 0.3s ease; }
+    .empty-state { text-align: center; margin-top: 50px; }
+    .wrap-grid { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; }
+    .wrap-grid .movie-card { margin-bottom: 15px; }
+
+    /* VIDEO PLAYER STYLES */
+    .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; display: flex; justify-content: center; align-items: center; z-index: 20000; animation: popIn 0.3s ease; }
+    .video-wrapper { width: 90vw; max-width: 1200px; background: #000; box-shadow: 0 0 50px rgba(0,0,0,0.9); }
+    .close-video-btn { position: absolute; top: 30px; right: 40px; background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 1.2rem; font-weight: bold; cursor: pointer; z-index: 20001; transition: 0.3s; }
+    .close-video-btn:hover { background: #E50914; color: white; transform: scale(1.1); }
   `]
 })
 export class UserDashboardComponent implements OnInit {
@@ -147,9 +184,13 @@ export class UserDashboardComponent implements OnInit {
   myList: string[] = []; 
   
   // Custom UI States
+  viewMode: 'home' | 'list' = 'home'; // Replaced showMyListModal with viewMode
   toastMsg = '';
   showLogoutModal = false;
-  showMyListModal = false;
+
+  // Video Player States
+  showVideoPlayer = false;
+  currentVideoUrl = '';
 
   constructor(private movieService: MovieService, private router: Router, private cdr: ChangeDetectorRef) {}
 
@@ -165,6 +206,11 @@ export class UserDashboardComponent implements OnInit {
     });
   }
 
+  // NEW: Maps the text list to full movie objects so cards can display posters
+  getWatchlistMovies() {
+    return this.movies.filter(m => this.myList.includes(m.title));
+  }
+
   filterMovies() {
     this.filteredMovies = this.movies.filter(m => m.title.toLowerCase().includes(this.searchTerm.toLowerCase()));
   }
@@ -175,7 +221,14 @@ export class UserDashboardComponent implements OnInit {
   }
 
   playMovie(title: string) {
-    this.showToast(`🎬 Preparing to stream: ${title}`);
+    this.showToast(`🎬 Now playing: ${title}`);
+    this.currentVideoUrl = 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+    this.showVideoPlayer = true;
+  }
+
+  closeVideo() {
+    this.showVideoPlayer = false;
+    this.currentVideoUrl = ''; 
   }
 
   addToList(title: string) {
@@ -185,6 +238,12 @@ export class UserDashboardComponent implements OnInit {
     } else {
       this.showToast(`ℹ️ '${title}' is already saved`);
     }
+  }
+
+  // NEW: Allows removal from the My List page
+  removeFromList(title: string) {
+    this.myList = this.myList.filter(item => item !== title);
+    this.showToast(`🗑️ Removed '${title}'`);
   }
 
   confirmLogout() {

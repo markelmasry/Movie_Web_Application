@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -66,12 +66,24 @@ export class LoginComponent {
   password = '';
   isSignUp = false;
   toastMsg = '';
-
-  constructor(private router: Router, private authService: AuthService) {}
+private toastTimeout: any;
+  constructor(private router: Router, private authService: AuthService,private cdr: ChangeDetectorRef) {}
 
   showToast(msg: string) {
+    // 3. Prevent "ghosting" by cancelling the old timer if a new message comes in
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+    }
+
     this.toastMsg = msg;
-    setTimeout(() => { this.toastMsg = ''; }, 3000);
+    
+    // 4. WAKE UP ANGULAR! Force the screen to show the message immediately
+    this.cdr.detectChanges(); 
+
+    this.toastTimeout = setTimeout(() => { 
+      this.toastMsg = ''; 
+      this.cdr.detectChanges(); // Force the screen to hide the message
+    }, 3000);
   }
 
   toggleMode() {
