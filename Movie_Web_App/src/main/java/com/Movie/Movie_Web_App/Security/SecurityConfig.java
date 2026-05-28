@@ -41,10 +41,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/Movies/search/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/Movies/AllMovies").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/Movies/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/Movies/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/Movies/**").hasAnyRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/Movies/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/Movies/MovieDetails/**").hasRole("ADMIN")
-
+                .requestMatchers(HttpMethod.GET, "/api/Movies/MovieDetails/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/users/all").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/users/{username}").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()

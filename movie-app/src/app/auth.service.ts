@@ -20,11 +20,8 @@ export class AuthService {
 
   getAllUsers(): Observable<any[]> {
     const savedCredentials = localStorage.getItem('authCredentials') || '';
-
-    const headers = new HttpHeaders({
-      'Authorization': savedCredentials
-    });
     
+    const headers = new HttpHeaders({'Authorization': savedCredentials});
     return this.http.get<any[]>(`${this.apiUrl}/all`, { headers });
   }
 }
