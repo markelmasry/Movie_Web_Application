@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class MovieService {
-  private apiUrl = 'http://localhost:8080/api/Movies';
+  private apiUrl = 'http://localhost:8080/api/movies';
 
   constructor(private http: HttpClient) {}
 
@@ -20,24 +20,24 @@ export class MovieService {
   }
 
 // Change Observable<any[]> to Observable<any>
-getMovies(page: number = 0): Observable<any> {
-  return this.http.get(`${this.apiUrl}?page=${page}&size=25`, { 
-    headers: this.getHeaders() 
-  });
-}
+  getMovies(page: number = 0, size: number = 20): Observable<any> {
+    return this.http.get(`${this.apiUrl}?page=${page}&size=${size}`, { 
+      headers: this.getHeaders() 
+    });
+  }
 
-  // Searches via your backend controller @GetMapping("/search/{title}")
-searchOmdb(title: string): Observable<any> {
-  return this.http.get(
-    `http://localhost:8080/api/Movies/search/${encodeURIComponent(title)}`, 
-    { headers: this.getHeaders() } // <--- ADD THIS
-  );
-}
+  // Searches via your backend controller GET /api/movies/search/{title}
+  searchOmdb(title: string, page: number = 1): Observable<any> {
+    return this.http.get(
+      `${this.apiUrl}/search/${encodeURIComponent(title)}?page=${page}`, 
+      { headers: this.getHeaders() }
+    );
+  }
 
 // 2. Update getOmdbDetails
 getOmdbDetails(imdbId: string): Observable<any> {
   return this.http.get(
-    `http://localhost:8080/api/Movies/MovieDetails/${imdbId}`, 
+    `http://localhost:8080/api/movies/MovieDetails/${imdbId}`, 
     { headers: this.getHeaders() } // <--- ADD THIS
   );
 }

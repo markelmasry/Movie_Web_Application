@@ -13,252 +13,463 @@ import { forkJoin } from 'rxjs';
   template: `
     <div class="admin-wrapper">
       
-      <div class="admin-toast" [class.show]="toastMsg">{{toastMsg}}</div>
+      <div class="admin-toast" [class.show]="toastMsg">
+        <div class="toast-icon">⚡</div>
+        <div class="toast-text">{{toastMsg}}</div>
+      </div>
 
       <div class="admin-modal-overlay" *ngIf="movieToDelete !== null">
-        <div class="admin-modal">
-          <h3 style="color: #ff4d4d;">Confirm Decommission</h3>
+        <div class="admin-modal glass-effect">
+          <div class="modal-icon danger-icon">⚠️</div>
+          <h3>Confirm Decommission</h3>
           <p>Are you sure you want to permanently delete this movie from the database?</p>
           <div class="modal-actions">
-            <button class="admin-btn-secondary" (click)="movieToDelete = null">Cancel</button>
-            <button class="admin-btn-danger" (click)="executeDelete()">DELETE</button>
+            <button class="btn-ghost" (click)="movieToDelete = null">Cancel</button>
+            <button class="btn-danger" (click)="executeDelete()">Permanently Delete</button>
           </div>
         </div>
       </div>
 
       <div class="admin-modal-overlay" *ngIf="showBatchDeleteModal">
-        <div class="admin-modal">
-          <h3 style="color: #ff4d4d;">Confirm Batch Decommission</h3>
+        <div class="admin-modal glass-effect">
+          <div class="modal-icon danger-icon">⚠️</div>
+          <h3>Confirm Batch Decommission</h3>
           <p>Are you sure you want to permanently delete <strong>{{ selectedForBatchDelete.size }}</strong> selected assets from the database?</p>
           <div class="modal-actions">
-            <button class="admin-btn-secondary" (click)="showBatchDeleteModal = false">Cancel</button>
-            <button class="admin-btn-danger" (click)="executeBatchDelete()">DELETE ALL</button>
+            <button class="btn-ghost" (click)="showBatchDeleteModal = false">Cancel</button>
+            <button class="btn-danger" (click)="executeBatchDelete()">Delete All</button>
           </div>
         </div>
       </div>
 
       <div class="admin-modal-overlay" *ngIf="showLogoutModal">
-        <div class="admin-modal">
+        <div class="admin-modal glass-effect">
+          <div class="modal-icon neutral-icon">🚪</div>
           <h3>Exit Admin Mode</h3>
-          <p>End the current administrative session?</p>
+          <p>End the current administrative session and return to login?</p>
           <div class="modal-actions">
-            <button class="admin-btn-secondary" (click)="showLogoutModal = false">Cancel</button>
-            <button class="admin-btn-danger" (click)="confirmLogout()">Exit System</button>
+            <button class="btn-ghost" (click)="showLogoutModal = false">Cancel</button>
+            <button class="btn-danger" (click)="confirmLogout()">Exit System</button>
           </div>
         </div>
       </div>
 
       <aside class="sidebar">
-        <h2 class="logo">CONTROL<span style="color: #E50914;">.</span></h2>
-        <div class="menu-item" [class.active]="activeTab === 'catalog'" (click)="setTab('catalog')">🎬 Catalog</div>
-        <div class="menu-item" [class.active]="activeTab === 'users'" (click)="setTab('users')">👤 Users</div>
-        <div class="menu-item logout" (click)="showLogoutModal = true">🚪 Sign Out</div>
+        <div class="sidebar-header">
+          <h2 class="logo">CONTROL<span class="text-accent">.</span></h2>
+          <div class="version-badge">v2.0.4</div>
+        </div>
+        
+        <nav class="sidebar-nav">
+          <div class="nav-label">Main Menu</div>
+          <button class="menu-item" [class.active]="activeTab === 'catalog'" (click)="setTab('catalog')">
+            <span class="icon">🎬</span> Intelligence Catalog
+          </button>
+          <button class="menu-item" [class.active]="activeTab === 'users'" (click)="setTab('users')">
+            <span class="icon">👤</span> Personnel Records
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="menu-item logout" (click)="showLogoutModal = true">
+            <span class="icon">⏻</span> Sign Out
+          </button>
+        </div>
       </aside>
 
       <main class="main-content">
-        <header class="admin-header">
-          <h2>{{ getHeaderTitle() }}</h2>
-          <div class="user-profile">Admin Mode</div>
-        </header>
-
-        <div *ngIf="activeTab === 'catalog'">
-          <div class="glass-panel search-section">
-            <h3>Add New Intelligence</h3>
-            <div class="admin-input-row">
-              <input [(ngModel)]="omdbSearchQuery" placeholder="Enter Movie Title (e.g. Inception)..." (keyup.enter)="searchOMDB()">
-              <button (click)="searchOMDB()" class="pulse-btn">SCAN DATABASE</button>
-            </div>
-            
-            <div *ngIf="searchResults.length > 0" class="search-list-container">
-              <div class="batch-actions" *ngIf="selectedForBatchAdd.size > 0">
-                <span style="font-size: 0.9rem; color: #aaa;">{{ selectedForBatchAdd.size }} Selected</span>
-                <button class="save-btn" style="padding: 6px 15px; font-size: 0.9rem;" (click)="executeBatchAdd()">BATCH DEPLOY</button>
-              </div>
-
-              <div *ngFor="let m of searchResults" class="search-item">
-                <input type="checkbox" class="custom-checkbox" 
-                       [checked]="selectedForBatchAdd.has(m.imdbID)" 
-                       (change)="toggleBatchAdd(m.imdbID)">
-                <img [src]="m.Poster" onerror="this.src='https://placehold.co/40x60/222/fff?text=?'">
-                <div class="search-item-info">
-                  <div class="search-item-title">{{ m.Title }}</div>
-                  <div class="search-item-year">{{ m.Year }}</div>
-                </div>
-                <button class="preview-btn" (click)="selectMovie(m.imdbID)">Preview</button>
-              </div>
-            </div>
-
-            <div *ngIf="omdbResult" class="omdb-preview">
-                <img [src]="omdbResult.poster" onerror="this.src='https://placehold.co/100x150/222/fff?text=No+Image'">
-                <div class="preview-text">
-                  <h4>{{omdbResult.title}} <span class="year-badge">{{omdbResult.movieYear}}</span></h4>
-                  <p class="preview-plot">{{omdbResult.plot}}</p>
-                  <div class="preview-meta">
-                    <span class="genre-badge">{{omdbResult.genre}}</span>
-                    <span class="rating-star"> ★ {{omdbResult.imdbRating}}</span>
-                  </div>
-                  <button (click)="addToDatabase()" class="save-btn">CONFIRM DEPLOYMENT</button>
-                  <button (click)="omdbResult = null" class="admin-btn-secondary" style="margin-left: 10px;">CANCEL</button>
-                </div>
+        <header class="top-header">
+          <div>
+            <h1 class="page-title">{{ getHeaderTitle() }}</h1>
+            <p class="page-subtitle">Manage system assets and intelligence deployments.</p>
+          </div>
+          <div class="user-profile">
+            <div class="avatar">AD</div>
+            <div class="user-info">
+              <span class="name">Administrator</span>
+              <span class="role">System Root</span>
             </div>
           </div>
+        </header>
 
-          <div class="catalog-section" style="overflow-x: auto; margin-top: 30px;">
-            <div class="batch-header">
-              <h3>Active Inventory <span style="font-size: 0.9rem; color: #666; font-weight: normal; margin-left: 10px;">(Total: {{totalElements}})</span></h3>
-              <button *ngIf="selectedForBatchDelete.size > 0" 
-                      class="admin-btn-danger" 
-                      (click)="showBatchDeleteModal = true">
-                BATCH DECOMMISSION ({{selectedForBatchDelete.size}})
+        <div *ngIf="activeTab === 'catalog'" class="fade-in">
+          
+          <section class="search-section glass-panel">
+            <div class="section-header">
+              <h2>Add New Intelligence</h2>
+              <p>Scan external databases to deploy new assets to the system.</p>
+            </div>
+            
+            <div class="search-bar-wrapper">
+              <div class="input-group">
+                <span class="search-icon">🔍</span>
+                <input [(ngModel)]="omdbSearchQuery" placeholder="Enter Movie Title (e.g., Inception)..." (keyup.enter)="searchOMDB()">
+              </div>
+              <button (click)="searchOMDB()" class="btn-primary pulse">Scan Database</button>
+            </div>
+
+            <div *ngIf="omdbResult" class="omdb-preview fade-in">
+                <img [src]="omdbResult.Poster" onerror="this.src='https://placehold.co/200x300/111/444?text=No+Image'">
+                <div class="preview-details">
+                  <h3>{{omdbResult.Title}} <span class="year-badge">{{omdbResult.Year}}</span></h3>
+                  <div class="meta-row">
+                    <span class="genre-tag">{{omdbResult.Genre}}</span>
+                    <span class="rating-tag">★ {{omdbResult.imdbRating}}</span>
+                    <span class="director-tag">🎥 {{omdbResult.Director}}</span>
+                  </div>
+                  <p class="plot-text">{{omdbResult.Plot}}</p>
+                  
+                  <div class="preview-actions">
+                    <button (click)="addToDatabase()" class="btn-success">Confirm Deployment</button>
+                    <button (click)="omdbResult = null" class="btn-ghost">Cancel</button>
+                  </div>
+                </div>
+            </div>
+
+            <div *ngIf="searchResults.length > 0" class="results-container fade-in">
+              <div class="results-header">
+                <h3>Scanner Results <span class="badge">{{totalSearchResults}} matches</span></h3>
+                <div class="batch-actions" *ngIf="selectedForBatchAdd.size > 0">
+                  <span class="selection-count">{{ selectedForBatchAdd.size }} Assets Selected</span>
+                  <button class="btn-success btn-sm" (click)="executeBatchAdd()">Batch Deploy</button>
+                </div>
+              </div>
+
+              <div class="movie-grid">
+                <div *ngFor="let m of searchResults" class="movie-card" [class.selected]="selectedForBatchAdd.has(m.imdbID)">
+                  <div class="card-poster-wrapper">
+                    <img [src]="m.Poster" onerror="this.src='https://placehold.co/300x450/111/444?text=?'">
+                    <div class="checkbox-overlay">
+                      <input type="checkbox" class="modern-checkbox" 
+                             [checked]="selectedForBatchAdd.has(m.imdbID)" 
+                             (change)="toggleBatchAdd(m.imdbID)">
+                    </div>
+                  </div>
+                  <div class="card-info">
+                    <h4 class="card-title">{{ m.Title }}</h4>
+                    <span class="card-year">{{ m.Year }}</span>
+                    <button class="btn-secondary btn-full" (click)="selectMovie(m.imdbID)">Inspect</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="search-footer" *ngIf="searchResults.length > 0">
+                <div class="pagination-wrapper" style="width: 100%; border-top: none; margin-top: 0; padding-top: 0;">
+                  <button class="btn-ghost" 
+                          [disabled]="currentUiPage === 1 || isSearchingMore" 
+                          (click)="prevScannerPage()">
+                    ← Previous Page
+                  </button>
+                  
+                  <div class="page-indicators">
+                    <span class="page-text">Scanner Page {{ currentUiPage }} of {{ maxUiPages }}</span>
+                  </div>
+                  
+                  <button class="btn-ghost" 
+                          [disabled]="currentUiPage >= maxUiPages || isSearchingMore" 
+                          (click)="nextScannerPage()">
+                    Next Page →
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <section class="inventory-section">
+            <div class="table-header">
+              <div>
+                <h2>Active Inventory</h2>
+                <p>Currently managing {{totalElements}} assets in the local database.</p>
+              </div>
+              <button *ngIf="selectedForBatchDelete.size > 0" class="btn-danger fade-in" (click)="showBatchDeleteModal = true">
+                Batch Decommission ({{selectedForBatchDelete.size}})
               </button>
             </div>
             
-            <table class="pro-table">
-              <thead>
-                <tr>
-                  <th style="width: 40px;">
-                    <input type="checkbox" class="custom-checkbox" 
-                           (change)="toggleAllDelete($event)"
-                           [checked]="dbMovies.length > 0 && selectedForBatchDelete.size === dbMovies.length">
-                  </th>
-                  <th>Poster</th>
-                  <th>Movie Info</th>
-                  <th>Director</th>
-                  <th>Genre</th>
-                  <th>Rating</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let movie of dbMovies" [class.selected-row]="selectedForBatchDelete.has(movie.id)">
-                  <td>
-                    <input type="checkbox" class="custom-checkbox" 
-                           [checked]="selectedForBatchDelete.has(movie.id)"
-                           (change)="toggleBatchDelete(movie.id)">
-                  </td>
-                  <td>
-                    <img [src]="movie.poster" class="mini-poster" onerror="this.src='https://placehold.co/45x65/222/fff?text=N/A'">
-                  </td>
-                  <td class="info-cell">
-                    <div class="table-title">{{movie.title}} <span class="year-badge" style="margin-left: 8px;">{{movie.movieYear}}</span></div>
-                    <div class="table-plot">{{ (movie.plot && movie.plot.length > 80) ? (movie.plot | slice:0:80) + '...' : movie.plot }}</div>
-                  </td>
-                  <td style="color: #bbb;">{{movie.director || 'N/A'}}</td>
-                  <td><span class="genre-badge">{{movie.genre || 'N/A'}}</span></td>
-                  <td style="color: #f5c518; font-weight: bold;">★ {{movie.imdbRating || '0.0'}}</td>
-                  <td>
-                    <button (click)="movieToDelete = movie.id" class="del-btn">DECOMMISSION</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div class="admin-pagination">
-              <button class="page-btn" [disabled]="currentPage === 0" (click)="prevPage()">◀ PREV</button>
-              <span class="page-info">PAGE {{ currentPage + 1 }} / {{ totalPages === 0 ? 1 : totalPages }}</span>
-              <button class="page-btn" [disabled]="currentPage >= totalPages - 1 || totalPages === 0" (click)="nextPage()">NEXT ▶</button>
+            <div class="table-container glass-panel">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th class="checkbox-cell">
+                      <input type="checkbox" class="modern-checkbox" 
+                             (change)="toggleAllDelete($event)"
+                             [checked]="dbMovies.length > 0 && selectedForBatchDelete.size === dbMovies.length">
+                    </th>
+                    <th>Asset</th>
+                    <th>Details</th>
+                    <th>Director</th>
+                    <th>Rating</th>
+                    <th class="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let movie of dbMovies" [class.row-selected]="selectedForBatchDelete.has(movie.id)">
+                    <td class="checkbox-cell">
+                      <input type="checkbox" class="modern-checkbox" 
+                             [checked]="selectedForBatchDelete.has(movie.id)"
+                             (change)="toggleBatchDelete(movie.id)">
+                    </td>
+                    <td class="poster-cell">
+                      <img [src]="movie.poster" class="micro-poster" onerror="this.src='https://placehold.co/45x65/111/444?text=N/A'">
+                    </td>
+                    <td class="info-cell">
+                      <div class="movie-title">{{movie.title}} <span class="year-badge sm">{{movie.movieYear}}</span></div>
+                      <div class="movie-genre">{{movie.genre || 'Unclassified'}}</div>
+                    </td>
+                    <td class="text-muted">{{movie.director || 'Unknown'}}</td>
+                    <td>
+                      <div class="rating-pill">★ {{movie.imdbRating || '0.0'}}</div>
+                    </td>
+                    <td class="text-right">
+                      <button (click)="movieToDelete = movie.id" class="btn-icon-danger" title="Decommission">🗑️</button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="dbMovies.length === 0">
+                    <td colspan="6" class="empty-state">
+                      <div class="empty-icon">📭</div>
+                      <p>Database is currently empty. Scan for intelligence above.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-          </div>
+            <div class="pagination-wrapper" *ngIf="totalPages > 0">
+              <button class="btn-ghost" [disabled]="currentPage === 0" (click)="prevPage()">← Previous</button>
+              <div class="page-indicators">
+                <span class="page-text">Page {{ currentPage + 1 }} of {{ totalPages }}</span>
+              </div>
+              <button class="btn-ghost" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">Next →</button>
+            </div>
+          </section>
         </div>
 
-        <div *ngIf="activeTab === 'users'" class="mock-view">
-          <div class="glass-panel">
-            <h3>Registered User Database</h3>
-            <table class="pro-table">
-              <thead><tr><th>Username</th><th>Status</th><th>ID</th></tr></thead>
-              <tbody>
-                <tr *ngFor="let user of users">
-                  <td>{{ user.username }}</td>
-                  <td><span [style.color]="user.role === 'ADMIN' ? '#46d369' : '#aaa'">{{ user.role }}</span></td>
-                  <td>{{ user.id }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div *ngIf="activeTab === 'users'" class="fade-in">
+          <section class="glass-panel">
+            <div class="section-header">
+              <h2>Personnel Records</h2>
+              <p>Manage system access and user roles.</p>
+            </div>
+            <div class="table-container">
+              <table class="modern-table">
+                <thead><tr><th>Identifier (ID)</th><th>Username</th><th>Clearance Level</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let user of users">
+                    <td class="text-muted">#{{ user.id }}</td>
+                    <td class="font-medium">{{ user.username }}</td>
+                    <td>
+                      <span class="role-badge" [class.admin-role]="user.role === 'ADMIN'">{{ user.role }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
       </main>
     </div>
   `,
   styles: [`
-    .admin-toast { position: fixed; top: 30px; right: -350px; background: #222; border-left: 4px solid #E50914; color: white; padding: 15px 25px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 10001; font-weight: bold; transition: 0.4s; }
-    .admin-toast.show { right: 30px; }
-    .admin-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(8px); }
-    .admin-modal { background: #0f0f0f; border: 1px solid #333; padding: 30px; border-radius: 8px; width: 380px; text-align: center; }
-    .modal-actions { display: flex; gap: 15px; margin-top: 20px; justify-content: center;}
-    .admin-wrapper { display: flex; background: #050505; min-height: 100vh; color: #fff; font-family: 'Inter', sans-serif; }
-    .sidebar { width: 260px; background: #0a0a0a; border-right: 1px solid #1f1f1f; padding: 30px; }
-    .menu-item { padding: 15px; margin-bottom: 10px; color: #888; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-    .menu-item.active { background: #1a1a1a; color: #fff; border-left: 3px solid #E50914; }
-    .logout:hover { color: #ff4d4d; }
-    .main-content { flex: 1; padding: 40px; }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .glass-panel { background: #0f0f0f; border: 1px solid #1f1f1f; padding: 30px; border-radius: 12px; position: relative; }
-    .admin-input-row { display: flex; gap: 15px; }
-    input[type="text"], input:not([type]) { flex: 1; background: #1a1a1a; border: 1px solid #333; padding: 15px; color: #fff; border-radius: 8px; outline: none; }
-    input:focus { border-color: #E50914; }
-    .pulse-btn { background: #E50914; color: white; border: none; padding: 0 30px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    /* --- VARIABLES & RESET --- */
+    :host {
+      --bg-base: #050505;
+      --bg-surface: #0a0a0b;
+      --bg-panel: rgba(20, 20, 22, 0.6);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent: #E50914;
+      --accent-hover: #f40612;
+      --success: #10b981;
+      --success-hover: #059669;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --font-family: 'Inter', system-ui, sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     
-    .search-list-container { background: #111; border: 1px solid #333; margin-top: 5px; border-radius: 8px; max-height: 350px; overflow-y: auto; position: absolute; width: 50%; z-index: 100; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-    .batch-actions { background: #1a1a1a; padding: 10px 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 101; }
-    .search-item { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #222; transition: 0.2s; }
-    .search-item:hover { background: #222; }
-    .search-item img { width: 40px; height: 60px; object-fit: cover; margin-right: 15px; border-radius: 4px; }
-    .search-item-info { display: flex; flex-direction: column; }
-    .search-item-title { font-weight: bold; color: #fff; font-size: 0.9rem; }
-    .search-item-year { font-size: 0.8rem; color: #888; }
-    .preview-btn { background: #333; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-left: auto; transition: 0.2s; font-size: 0.8rem; }
-    .preview-btn:hover { background: #555; }
-    .custom-checkbox { width: 18px; height: 18px; accent-color: #E50914; cursor: pointer; margin-right: 15px; }
+    /* --- TYPOGRAPHY & UTILS --- */
+    .text-accent { color: var(--accent); }
+    .text-muted { color: var(--text-muted); }
+    .text-right { text-align: right; }
+    .font-medium { font-weight: 500; }
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .omdb-preview { display: flex; gap: 25px; margin-top: 30px; padding: 25px; background: #111; border-radius: 12px; border: 1px solid #E50914; }
-    .omdb-preview img { width: 140px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-    .preview-plot { color: #aaa; font-size: 0.9rem; margin: 10px 0; line-height: 1.5; }
-    .preview-meta { margin-bottom: 15px; }
-    .rating-star { color: #f5c518; font-weight: bold; margin-left: 10px; }
+    /* --- LAYOUT --- */
+    .admin-wrapper { display: flex; min-height: 100vh; background: var(--bg-base); color: var(--text-main); font-family: var(--font-family); }
     
-    .batch-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .pro-table { width: 100%; border-collapse: collapse; }
-    .pro-table th { text-align: left; padding: 15px; color: #666; border-bottom: 1px solid #333; font-size: 0.8rem; text-transform: uppercase; }
-    .pro-table td { padding: 15px; border-bottom: 1px solid #111; vertical-align: middle; transition: 0.2s; }
-    .selected-row td { background: rgba(229, 9, 20, 0.05); }
-    .mini-poster { width: 45px; height: 65px; object-fit: cover; border-radius: 4px; }
-    .table-title { font-weight: bold; color: #fff; margin-bottom: 5px; }
-    .table-plot { font-size: 0.85rem; color: #777; }
-    .year-badge { background: #222; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: #aaa; border: 1px solid #333; }
-    .genre-badge { background: #1a1a1a; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #333; color: #eee; }
-    .del-btn { color: #ff4d4d; background: transparent; border: 1px solid #ff4d4d; padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: 0.3s; font-size: 0.8rem; }
-    .del-btn:hover { background: #ff4d4d; color: #fff; }
-    .save-btn { background: #46d369; color: #000; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    .save-btn:hover { background: #3cb356; transform: translateY(-2px); }
-    .admin-btn-secondary { background: #333; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
-    .admin-btn-secondary:hover { background: #444; }
-    .admin-btn-danger { background: #E50914; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-    .admin-btn-danger:hover { background: #f40612; }
+    /* --- SIDEBAR --- */
+    .sidebar { width: 280px; background: var(--bg-surface); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 24px; }
+    .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
+    .version-badge { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); font-size: 0.7rem; padding: 4px 8px; border-radius: var(--radius-sm); color: var(--text-muted); }
+    .sidebar-nav { flex: 1; }
+    .nav-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 12px; font-weight: 600; }
+    .menu-item { display: flex; align-items: center; gap: 12px; width: 100%; background: transparent; border: none; color: var(--text-muted); padding: 12px 16px; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: var(--transition); text-align: left; }
+    .menu-item:hover { background: rgba(255,255,255,0.03); color: var(--text-main); }
+    .menu-item.active { background: rgba(229, 9, 20, 0.1); color: var(--accent); }
+    .menu-item.active .icon { color: var(--accent); }
+    .logout:hover { background: rgba(229, 9, 20, 0.1); color: var(--accent); }
 
-    /* NEW: Styles for Admin Pagination */
-    .admin-pagination { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #222; }
-    .page-btn { background: #1a1a1a; color: #ccc; border: 1px solid #333; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.8rem; transition: 0.3s; }
-    .page-btn:hover:not(:disabled) { background: #E50914; border-color: #E50914; color: white; }
-    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .page-info { color: #888; font-size: 0.85rem; font-weight: bold; letter-spacing: 1px; }
+    /* --- MAIN CONTENT --- */
+    .main-content { flex: 1; padding: 40px; max-width: 1400px; margin: 0 auto; width: 100%; overflow-y: auto; }
+    .top-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+    .page-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
+    .page-subtitle { color: var(--text-muted); font-size: 0.9rem; }
+    .user-profile { display: flex; align-items: center; gap: 12px; background: var(--bg-surface); padding: 8px 16px 8px 8px; border-radius: 40px; border: 1px solid var(--border-color); }
+    .avatar { background: var(--accent); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; }
+    .user-info { display: flex; flex-direction: column; }
+    .user-info .name { font-size: 0.85rem; font-weight: 600; }
+    .user-info .role { font-size: 0.7rem; color: var(--text-muted); }
+
+    /* --- PANELS & GLASSMORPHISM --- */
+    .glass-panel { background: var(--bg-panel); backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .section-header { margin-bottom: 24px; }
+    .section-header h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 4px; }
+    .section-header p { color: var(--text-muted); font-size: 0.9rem; }
+
+    /* --- INPUTS & BUTTONS --- */
+    .search-bar-wrapper { display: flex; gap: 16px; align-items: center; }
+    .input-group { position: relative; flex: 1; }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; opacity: 0.5; }
+    .input-group input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main); padding: 16px 16px 16px 48px; border-radius: var(--radius-md); font-size: 1rem; outline: none; transition: var(--transition); font-family: var(--font-family); }
+    .input-group input:focus { border-color: var(--accent); background: rgba(0,0,0,0.5); box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1); }
+    
+    button { font-family: var(--font-family); outline: none; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: var(--transition); border: 1px solid transparent; }
+    .btn-primary { background: var(--accent); color: white; padding: 16px 32px; font-size: 1rem; }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(229, 9, 20, 0.3); }
+    .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-main); padding: 10px 20px; border-color: var(--border-color); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    .btn-success { background: var(--success); color: white; padding: 12px 24px; }
+    .btn-success:hover { background: var(--success-hover); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2); transform: translateY(-2px); }
+    .btn-danger { background: var(--accent); color: white; padding: 12px 24px; }
+    .btn-danger:hover { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--text-muted); padding: 12px 24px; }
+    .btn-ghost:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+    .btn-sm { padding: 8px 16px; font-size: 0.85rem; border-radius: var(--radius-sm); }
+    .btn-full { width: 100%; }
+    .btn-icon-danger { background: transparent; color: var(--text-muted); padding: 8px; border-radius: var(--radius-sm); border: 1px solid transparent; font-size: 1.1rem; }
+    .btn-icon-danger:hover { background: rgba(229, 9, 20, 0.1); color: var(--accent); border-color: rgba(229, 9, 20, 0.2); }
+
+    /* --- RESULTS GRID --- */
+    .results-container { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--border-color); }
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .results-header h3 { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+    .badge { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
+    .batch-actions { display: flex; align-items: center; gap: 16px; background: rgba(16, 185, 129, 0.1); padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .selection-count { font-size: 0.85rem; color: var(--success); font-weight: 500; }
+    
+    .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px; }
+    .movie-card { background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; transition: var(--transition); display: flex; flex-direction: column; }
+    .movie-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.2); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
+    .movie-card.selected { border-color: var(--success); box-shadow: 0 0 0 1px var(--success); }
+    
+    .card-poster-wrapper { position: relative; aspect-ratio: 2/3; overflow: hidden; }
+    .card-poster-wrapper img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
+    .movie-card:hover .card-poster-wrapper img { transform: scale(1.05); }
+    .checkbox-overlay { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); padding: 6px; border-radius: var(--radius-sm); backdrop-filter: blur(4px); opacity: 0; transition: var(--transition); }
+    .movie-card:hover .checkbox-overlay, .movie-card.selected .checkbox-overlay { opacity: 1; }
+    
+    .card-info { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: space-between; }
+    .card-title { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-year { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; display: block; }
+
+    .search-footer { margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .search-footer .stats { font-size: 0.9rem; color: var(--text-muted); }
+
+    /* --- OMDB PREVIEW DETAILED --- */
+    .omdb-preview { display: flex; gap: 32px; background: rgba(229, 9, 20, 0.03); border: 1px solid rgba(229, 9, 20, 0.2); border-radius: var(--radius-lg); padding: 32px; margin-top: 24px; }
+    .omdb-preview img { width: 220px; border-radius: var(--radius-md); box-shadow: 0 16px 32px rgba(0,0,0,0.4); }
+    .preview-details { display: flex; flex-direction: column; justify-content: center; }
+    .preview-details h3 { font-size: 1.8rem; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; }
+    .meta-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .genre-tag, .rating-tag, .director-tag { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+    .rating-tag { color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.05); }
+    .plot-text { font-size: 0.95rem; line-height: 1.6; color: var(--text-muted); margin-bottom: 32px; max-width: 800px; }
+    .preview-actions { display: flex; gap: 16px; }
+
+    /* --- MODERN TABLE --- */
+    .table-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+    .table-header h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 4px; }
+    .table-header p { color: var(--text-muted); font-size: 0.9rem; }
+    .table-container { overflow-x: auto; padding: 0; }
+    
+    .modern-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; }
+    .modern-table th { padding: 16px 20px; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); }
+    .modern-table td { padding: 16px 20px; vertical-align: middle; border-bottom: 1px solid var(--border-color); transition: var(--transition); }
+    .modern-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+    .modern-table tbody tr.row-selected td { background: rgba(229, 9, 20, 0.05); }
+    .modern-table tbody tr:last-child td { border-bottom: none; }
+    
+    .micro-poster { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+    .movie-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+    .movie-genre { font-size: 0.8rem; color: var(--text-muted); }
+    .year-badge { background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; }
+    .year-badge.sm { font-size: 0.7rem; padding: 2px 6px; }
+    .rating-pill { display: inline-block; background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    
+    .role-badge { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; }
+    .role-badge.admin-role { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+    
+    .empty-state { text-align: center; padding: 60px 20px !important; color: var(--text-muted); }
+    .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+
+    /* --- CHECKBOXES --- */
+    .modern-checkbox { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; background: rgba(0,0,0,0.3); border: 2px solid var(--text-muted); border-radius: 4px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; }
+    .modern-checkbox:checked { background: var(--accent); border-color: var(--accent); }
+    .modern-checkbox:checked::after { content: '✓'; color: white; font-size: 14px; font-weight: bold; }
+
+    /* --- PAGINATION --- */
+    .pagination-wrapper { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color); }
+    .page-indicators { background: var(--bg-surface); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; }
+    .page-text { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+
+    /* --- MODALS & TOASTS --- */
+    .admin-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 9999; animation: fadeIn 0.2s ease; }
+    .admin-modal { background: var(--bg-surface); padding: 40px; text-align: center; max-width: 440px; width: 90%; }
+    .modal-icon { font-size: 3rem; margin-bottom: 20px; }
+    .admin-modal h3 { font-size: 1.5rem; margin-bottom: 12px; }
+    .admin-modal p { color: var(--text-muted); margin-bottom: 32px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 16px; justify-content: center; }
+    .modal-actions button { flex: 1; }
+
+    .admin-toast { position: fixed; bottom: 40px; right: 40px; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-main); padding: 16px 24px; border-radius: var(--radius-md); box-shadow: 0 16px 32px rgba(0,0,0,0.5); z-index: 10000; font-weight: 500; display: flex; align-items: center; gap: 16px; transform: translateY(100px); opacity: 0; transition: var(--transition); }
+    .admin-toast.show { transform: translateY(0); opacity: 1; }
+    .toast-icon { background: rgba(255,255,255,0.1); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
   `]
 })
 export class AdminDashboardComponent implements OnInit {
   activeTab: string = 'catalog'; 
   omdbSearchQuery = '';
+  lastSearchTitle = '';
   omdbResult: any = null;
   dbMovies: any[] = [];
   users: any[] = [];
   searchResults: any[] = [];
   toastMsg = '';
   
+  // Search Pagination State
+  currentUiPage: number = 1;
+  totalSearchResults: number = 0;
+  isSearchingMore: boolean = false;
+  uiPageSize: number = 16;
+
   // Single and Batch Delete States
   movieToDelete: number | null = null;
   showBatchDeleteModal = false;
   showLogoutModal = false;
 
-  // NEW: Pagination State Tracking
+  // Inventory Pagination State Tracking
   currentPage: number = 0;
   totalPages: number = 0;
   totalElements: number = 0;
@@ -282,7 +493,7 @@ export class AdminDashboardComponent implements OnInit {
     this.activeTab = tab;
     if (tab === 'users') this.loadUsers();
     if (tab === 'catalog') {
-      this.currentPage = 0; // Reset to page 1 when returning to catalog
+      this.currentPage = 0; 
       this.refreshDbList();
     }
   }
@@ -301,12 +512,12 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   getHeaderTitle(): string {
-    return this.activeTab === 'catalog' ? 'Database Management' : 'User Management';
+    return this.activeTab === 'catalog' ? 'Intelligence Catalog' : 'Personnel Management';
   }
 
   showToast(msg: string) {
     this.toastMsg = msg;
-    setTimeout(() => { this.toastMsg = ''; }, 3000);
+    setTimeout(() => { this.toastMsg = ''; }, 4000);
   }
 
   confirmLogout() {
@@ -315,26 +526,152 @@ export class AdminDashboardComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  searchOMDB() {
-    if (!this.omdbSearchQuery) return;
-    this.movieService.searchOmdb(this.omdbSearchQuery).subscribe({
+  // --- DATABASE REFRESH & INVENTORY PAGINATION ---
+  
+  refreshDbList() {
+    this.movieService.getMovies(this.currentPage).subscribe({
       next: (res: any) => {
-        const results = res.search || res.Search;
-        if (results && results.length > 0) {
-          this.searchResults = results;
-          this.omdbResult = null; 
-          this.selectedForBatchAdd.clear(); 
-        } else {
-          this.showToast("No matches found.");
-          this.searchResults = [];
-        }
+        this.dbMovies = res.content || [];
+        this.totalPages = res.totalPages || 0;
+        this.totalElements = res.totalElements || 0;
+        this.selectedForBatchDelete.clear(); 
         this.cdr.detectChanges();
       },
-      error: () => this.showToast("Scanner offline. Check backend connectivity.")
+      error: () => this.showToast("Failed to load active inventory.")
     });
   }
 
-  // --- BATCH SELECTION LOGIC ---
+  prevPage() {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.refreshDbList();
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages - 1) {
+      this.currentPage++;
+      this.refreshDbList();
+    }
+  }
+
+  // --- OMDB SCANNER LOGIC & PAGINATION ---
+
+  // Getter for max pages (OMDB returns 10 results per page)
+get maxUiPages(): number {
+    return Math.ceil(this.totalSearchResults / this.uiPageSize);
+  }
+
+  searchOMDB() {
+    if (!this.omdbSearchQuery) return;
+    this.currentUiPage = 1;
+    this.lastSearchTitle = this.omdbSearchQuery;
+    this.fetchBufferedResults();
+  }
+
+  fetchBufferedResults() {
+    this.isSearchingMore = true;
+
+    // Calculate which OMDb API pages we need to fetch to satisfy the UI page
+    // UI Page 1 (1-12) needs API Page 1 (1-10) and API Page 2 (11-20)
+    const startIndex = (this.currentUiPage - 1) * this.uiPageSize + 1;
+    const endIndex = this.currentUiPage * this.uiPageSize;
+    
+    const startApiPage = Math.ceil(startIndex / 10);
+    const endApiPage = Math.ceil(endIndex / 10);
+
+    // Create an array of requests to fetch the required API pages
+    const requests = [];
+    for (let p = startApiPage; p <= endApiPage; p++) {
+      requests.push(this.movieService.searchOmdb(this.lastSearchTitle, p));
+    }
+
+    forkJoin(requests).subscribe({
+      next: (responses: any[]) => {
+        let combinedResults: any[] = [];
+        let totalCount = 0;
+
+        responses.forEach(res => {
+          if (res.Response === 'True') {
+            combinedResults = [...combinedResults, ...res.Search];
+            totalCount = parseInt(res.totalResults);
+          }
+        });
+
+        if (combinedResults.length > 0) {
+          this.totalSearchResults = totalCount;
+          
+          // Slice the combined array to get EXACTLY the 12 items for this UI page
+          // We must calculate the offset relative to the fetched API pages
+          const sliceStart = (startIndex - 1) % 10; 
+          this.searchResults = combinedResults.slice(sliceStart, sliceStart + this.uiPageSize);
+        } else {
+          this.showToast("No results found.");
+          this.searchResults = [];
+        }
+
+        this.isSearchingMore = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.showToast("External database scan failed.");
+        this.isSearchingMore = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  nextScannerPage() {
+    if (this.currentUiPage < this.maxUiPages) {
+      this.currentUiPage++;
+      this.fetchBufferedResults();
+    }
+  }
+  
+  prevScannerPage() {
+    if (this.currentUiPage > 1) {
+      this.currentUiPage--;
+      this.fetchBufferedResults();
+    }
+  }
+  // --- SINGLE ACTIONS ---
+
+  selectMovie(imdbID: string) {
+    this.movieService.getOmdbDetails(imdbID).subscribe({
+      next: (res) => { this.omdbResult = res; },
+      error: () => { this.showToast('Failed to fetch full asset details.'); }
+    });
+  }
+
+  addToDatabase() {
+    if (!this.omdbResult) return;
+    const dto = this.mapOmdbToDto(this.omdbResult);
+
+    this.movieService.addMovie(dto).subscribe({
+      next: () => {
+        this.showToast('Asset deployed successfully.');
+        this.omdbResult = null;
+        this.refreshDbList();
+      },
+      error: (err) => {
+        this.showToast(err.error?.message || 'Deployment failed. Asset may already exist.');
+      }
+    });
+  }
+
+  executeDelete() {
+    if (this.movieToDelete === null) return;
+    this.movieService.deleteMovie(this.movieToDelete).subscribe({
+      next: () => {
+        this.showToast('Asset permanently deleted.');
+        this.movieToDelete = null;
+        this.refreshDbList();
+      },
+      error: () => this.showToast('Failed to delete asset.')
+    });
+  }
+
+  // --- BATCH ACTIONS ---
 
   toggleBatchAdd(imdbID: string) {
     if (this.selectedForBatchAdd.has(imdbID)) {
@@ -342,6 +679,32 @@ export class AdminDashboardComponent implements OnInit {
     } else {
       this.selectedForBatchAdd.add(imdbID);
     }
+  }
+
+  executeBatchAdd() {
+    if (this.selectedForBatchAdd.size === 0) return;
+    
+    this.showToast(`Fetching details for ${this.selectedForBatchAdd.size} assets...`);
+    
+    // We must fetch full details for each OMDB item before adding them to the DB
+    const detailRequests = Array.from(this.selectedForBatchAdd).map(id => 
+      this.movieService.getOmdbDetails(id)
+    );
+
+    forkJoin(detailRequests).subscribe({
+      next: (omdbDetails: any[]) => {
+        const dtos = omdbDetails.map(detail => this.mapOmdbToDto(detail));
+        this.movieService.addMoviesBatch(dtos).subscribe({
+          next: () => {
+            this.showToast(`Successfully deployed ${dtos.length} assets.`);
+            this.selectedForBatchAdd.clear();
+            this.refreshDbList();
+          },
+          error: (err) => this.showToast(err.error?.message || 'Batch deployment failed.')
+        });
+      },
+      error: () => this.showToast('Failed to fetch asset details for batch deployment.')
+    });
   }
 
   toggleBatchDelete(id: number) {
@@ -360,198 +723,37 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  // --- SINGLE ACTIONS ---
-
-  selectMovie(imdbID: string) {
-    this.movieService.getOmdbDetails(imdbID).subscribe({
-      next: (res: any) => {
-        this.omdbResult = {
-          title: res.title || res.Title,
-          movieYear: res.movieYear || res.Year || res.year,
-          imdbId: res.imdbId || res.imdbID, 
-          genre: res.genre || res.Genre,
-          director: res.director || res.Director,
-          plot: res.plot || res.Plot,
-          poster: res.poster || res.Poster,
-          imdbRating: res.imdbRating || res.Rating || 'N/A'
-        };
-        this.searchResults = []; 
-        this.selectedForBatchAdd.clear();
-        this.cdr.detectChanges(); 
-      },
-      error: (err) => {
-        this.showToast("Failed to retrieve intelligence details.");
-      }
-    });
-  }
-
-  addToDatabase() {
-    if (!this.omdbResult) return;
-
-    const newMovie = {
-      title: this.omdbResult.title, 
-      movieYear: this.omdbResult.movieYear,
-      imdbId: this.omdbResult.imdbId, 
-      poster: this.omdbResult.poster,
-      genre: this.omdbResult.genre,
-      director: this.omdbResult.director,
-      plot: this.omdbResult.plot,
-      imdbRating: (this.omdbResult.imdbRating && this.omdbResult.imdbRating !== 'N/A') 
-                   ? parseFloat(this.omdbResult.imdbRating) 
-                   : 0.0
-    };
-
-    this.movieService.addMovie(newMovie).subscribe({
-      next: () => { 
-        this.omdbResult = null; 
-        this.omdbSearchQuery = ''; 
-        this.showToast("Deployment Successful.");
-        this.refreshDbList(); 
-      },
-      error: (err) => {
-        if (err.status === 409) {
-          this.showToast(`Conflict: ${newMovie.title} already exists.`);
-        } else {
-          this.showToast("Error: Database rejected property.");
-        }
-      }
-    });
-  }
-
-  executeDelete() {
-    if(this.movieToDelete !== null) {
-      this.movieService.deleteMovie(this.movieToDelete).subscribe({
-        next: () => {
-          this.movieToDelete = null;
-          this.showToast("Asset decommissioned.");
-          this.refreshDbList();
-        },
-        error: () => this.showToast("Failed to delete asset.")
-      });
-    }
-  }
-
- executeBatchAdd() {
-  if (this.selectedForBatchAdd.size === 0) return;
-  
-  this.showToast(`Fetching details and deploying ${this.selectedForBatchAdd.size} assets...`);
-
-  const omdbRequests = Array.from(this.selectedForBatchAdd).map(imdbID => 
-    this.movieService.getOmdbDetails(imdbID)
-  );
-
-  forkJoin(omdbRequests).subscribe({
-    next: (responses: any[]) => {
-      
-      const newMovies = responses.map(res => ({
-        title: res.title || res.Title,
-        movieYear: res.movieYear || res.Year || res.year,
-        imdbId: res.imdbId || res.imdbID,
-        poster: res.poster || res.Poster,
-        genre: res.genre || res.Genre,
-        director: res.director || res.Director,
-        plot: res.plot || res.Plot,
-        imdbRating: (res.imdbRating || res.Rating) !== 'N/A' ? parseFloat(res.imdbRating || res.Rating) : 0.0
-      }));
-
-      this.movieService.addMoviesBatch(newMovies).subscribe({
-        next: () => {
-          this.showToast(`Batch deployment successful.`); 
-          this.selectedForBatchAdd.clear();
-          this.searchResults = []; 
-          this.omdbSearchQuery = '';
-          this.refreshDbList();
-        },
-        error: (err) => {
-          console.error("Batch Add Error:", err);
-          this.showToast("Failed to deploy batch. Check for duplicates.");
-        }
-      });
-    },
-    error: () => {
-      this.showToast("Failed to fetch intelligence details for batch.");
-    }
-  });
-}
-
   executeBatchDelete() {
     if (this.selectedForBatchDelete.size === 0) return;
-
-    const idsToDelete = Array.from(this.selectedForBatchDelete);
     
-    this.showBatchDeleteModal = false;
-    this.showToast(`Decommissioning ${idsToDelete.length} assets...`);
-
-    this.movieService.deleteMoviesBatch(idsToDelete).subscribe({
+    const ids = Array.from(this.selectedForBatchDelete);
+    this.movieService.deleteMoviesBatch(ids).subscribe({
       next: () => {
-        this.showToast(`Batch decommission successful.`);
+        this.showToast(`Successfully decommissioned ${ids.length} assets.`);
         this.selectedForBatchDelete.clear();
-        
-        // Safety check: if we deleted everything on the current page, go back a page
-        if (this.dbMovies.length === idsToDelete.length && this.currentPage > 0) {
-          this.currentPage--;
-        }
-        
+        this.showBatchDeleteModal = false;
         this.refreshDbList();
       },
-      error: (err) => {
-        console.error("Batch Delete Error:", err);
-        this.showToast("Failed to decommission batch.");
+      error: () => {
+        this.showToast('Batch deletion failed.');
+        this.showBatchDeleteModal = false;
       }
     });
   }
 
-  checkBatchComplete(completed: number, errors: number, total: number, type: string) {
-    if (completed + errors === total) {
-      this.showToast(`Batch ${type} finished: ${completed} successful, ${errors} failed/duplicate.`);
-      
-      if (type === 'deployment') {
-        this.selectedForBatchAdd.clear();
-        this.searchResults = []; 
-        this.omdbSearchQuery = '';
-      } else {
-        this.selectedForBatchDelete.clear();
-      }
-      
-      this.refreshDbList();
-    }
-  }
+  // --- UTILS ---
 
-  // NEW: Pagination Control Methods
-  nextPage() {
-    if (this.currentPage < this.totalPages - 1) {
-      this.currentPage++;
-      this.refreshDbList();
-    }
-  }
-
-  prevPage() {
-    if (this.currentPage > 0) {
-      this.currentPage--;
-      this.refreshDbList();
-    }
-  }
-
-  // UPDATED: Now sends currentPage and reads the paginated response
-  refreshDbList() {
-    this.movieService.getMovies(this.currentPage).subscribe({
-      next: (data: any) => { 
-        // We now read 'content', 'totalPages', and 'totalElements'
-        this.dbMovies = data.content.slice().reverse(); 
-        this.totalPages = data.totalPages;
-        this.totalElements = data.totalElements;
-
-        // Clean up deleted items from selection if they somehow persisted
-        this.selectedForBatchDelete.forEach(id => {
-          if (!this.dbMovies.find(m => m.id === id)) {
-            this.selectedForBatchDelete.delete(id);
-          }
-        });
-        this.cdr.detectChanges(); 
-      },
-      error: (err: any) => {
-        if (err.status === 401) this.router.navigate(['/login']);
-      }
-    });
+  mapOmdbToDto(omdb: any): any {
+    return {
+      title: omdb.Title,
+      movieYear: omdb.Year,
+      genre: omdb.Genre,
+      director: omdb.Director,
+      plot: omdb.Plot,
+      poster: omdb.Poster !== 'N/A' ? omdb.Poster : null,
+      imdbRating: omdb.imdbRating && omdb.imdbRating !== 'N/A' ? parseFloat(omdb.imdbRating) : 0,
+      imdbId: omdb.imdbID,
+      userRating: null
+    };
   }
 }

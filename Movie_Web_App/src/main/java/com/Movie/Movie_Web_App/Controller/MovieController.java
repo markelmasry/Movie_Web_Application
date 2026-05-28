@@ -7,7 +7,6 @@ import com.Movie.Movie_Web_App.Dto.OmdbResponse;
 import com.Movie.Movie_Web_App.Service.MovieService;
 import lombok.AllArgsConstructor;
 import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,15 +24,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 @CrossOrigin(origins = "http://localhost:4200") 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/Movies")
-public class MovieContoller {
+@RequestMapping("/api/movies")
+public class MovieController {
 
     private final MovieService movieService;
 
     @GetMapping("/search/{title}")
-    public ResponseEntity<OmdbResponse> search(@PathVariable String title) {
-        return ResponseEntity.ok(movieService.searchOmdb(title));
+    public ResponseEntity<OmdbResponse> search( @PathVariable String title, @RequestParam(defaultValue = "1") int page) {
+    return ResponseEntity.ok(movieService.searchOmdb(title, page));
     }
+    
     @GetMapping("/MovieDetails/{imdbId}")
     public ResponseEntity<OmdbMovieItemResponse> getDetails(@PathVariable String imdbId) {
         return ResponseEntity.ok(movieService.getMovieDetails(imdbId));

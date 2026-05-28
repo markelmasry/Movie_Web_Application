@@ -9,7 +9,7 @@ import com.Movie.Movie_Web_App.Dto.OmdbResponse;
 import com.Movie.Movie_Web_App.Entity.Movie;
 import com.Movie.Movie_Web_App.ExceptionHandling.DuplicateResourceException;
 import com.Movie.Movie_Web_App.ExceptionHandling.ResourceNotFoundException;
-import com.Movie.Movie_Web_App.Mapper.MoiveMapper;
+import com.Movie.Movie_Web_App.Mapper.MovieMapper;
 import com.Movie.Movie_Web_App.Repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,20 +22,19 @@ import org.springframework.data.domain.Pageable;
 public class MovieService {
 
     private final MovieRepository movierepository;
-    private final MoiveMapper moiveMapper;
+    private final MovieMapper moiveMapper;
     private final RestTemplate restTemplate;
 
     @Value("${omdb.api.key}")
     private String apiKey;
 
-public OmdbResponse searchOmdb(String title) {
+public OmdbResponse searchOmdb(String title ,int page) {
     try {
-        String url = "https://www.omdbapi.com/?s=" + title + "&apikey=" + apiKey;
-        System.out.println("Calling URL: " + url); // Debug: See the actual URL being called
-        
+        String url = "https://www.omdbapi.com/?s=" + title + "&apikey=" + apiKey + "&page=" + page;
+        System.out.println("Calling URL: " + url);
         return restTemplate.getForObject(url, OmdbResponse.class);
     } catch (Exception e) {
-        e.printStackTrace(); // THIS prints the real reason in RED in your console
+        e.printStackTrace();
         throw e;
     }
 }
