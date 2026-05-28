@@ -19,9 +19,12 @@ export class MovieService {
     });
   }
 
-  getMovies(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl, { headers: this.getHeaders() });
-  }
+// Change Observable<any[]> to Observable<any>
+getMovies(page: number = 0): Observable<any> {
+  return this.http.get(`${this.apiUrl}?page=${page}&size=6`, { 
+    headers: this.getHeaders() 
+  });
+}
 
   // Searches via your backend controller @GetMapping("/search/{title}")
 searchOmdb(title: string): Observable<any> {

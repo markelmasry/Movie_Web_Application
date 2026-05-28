@@ -13,6 +13,9 @@ import com.Movie.Movie_Web_App.Mapper.MoiveMapper;
 import com.Movie.Movie_Web_App.Repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -97,11 +100,11 @@ public OmdbMovieItemResponse getMovieDetails(String imdbId) {
         return moiveMapper.toDto(movie);
     }
 
-    public List<MovieDto> getAllMovies(){
-        List<Movie> movies= movierepository.findAll();
-        return movies.stream()
-                     .map(moiveMapper::toDto)
-                     .toList();
+    public Page<MovieDto> getAllMovies(int page, int size) {
+    Pageable pageable = PageRequest.of(page, size);
+
+    return movierepository.findAll(pageable)
+            .map(moiveMapper::toDto); 
     }
     
     public MovieDto updateMovieRating(Long movieId, Double newRating) {

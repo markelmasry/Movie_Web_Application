@@ -25,7 +25,7 @@ public class Movie {
     private String genre;
     private String director;
 
-    @Column(length = 1000) // Plots can be long
+    @Column(length = 4000) // Plots can be long
     private String plot;
     private String poster;
     private Double imdbRating; 

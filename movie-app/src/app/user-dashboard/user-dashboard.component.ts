@@ -127,6 +127,29 @@ import { MovieService } from '../movie.service';
               </div>
             </div>
           </div>
+          
+          <div class="pagination-controls" style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; padding-bottom: 20px;">
+            <button class="modal-btn secondary" 
+                    [disabled]="currentPage === 0" 
+                    (click)="prevPage()"
+                    [style.opacity]="currentPage === 0 ? '0.5' : '1'"
+                    style="max-width: 150px;">
+              ◀ Previous
+            </button>
+            
+            <span style="display: flex; align-items: center; font-weight: bold; color: #aaa;">
+              Page {{ currentPage + 1 }} of {{ totalPages || 1 }}
+            </span>
+            
+            <button class="modal-btn secondary" 
+                    [disabled]="currentPage >= totalPages - 1" 
+                    (click)="nextPage()"
+                    [style.opacity]="currentPage >= totalPages - 1 ? '0.5' : '1'"
+                    style="max-width: 150px;">
+              Next ▶
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -135,7 +158,7 @@ import { MovieService } from '../movie.service';
         
         <div class="empty-state" *ngIf="myList.length === 0">
           <p style="color:#888; font-size: 1.2rem;">Your list is empty. Add movies using the + button.</p>
-          <button class="modal-btn secondary" (click)="viewMode = 'home'" style="margin-top: 15px;">Browse Movies</button>
+          <button class="modal-btn secondary" (click)="viewMode = 'home'" style="margin-top: 15px; max-width: 200px;">Browse Movies</button>
         </div>
 
         <div class="movie-grid wrap-grid" *ngIf="myList.length > 0">
@@ -251,7 +274,8 @@ export class UserDashboardComponent implements OnInit {
   isScrolled: boolean = false;
   userRatingInput: number | null = null;
   hoverRating: number | null = null;
-  
+  currentPage: number = 0;
+  totalPages: number = 0;
   myList: string[] = []; 
   viewMode: 'home' | 'list' = 'home'; 
   toastMsg = '';
@@ -269,15 +293,33 @@ export class UserDashboardComponent implements OnInit {
 
   ngOnInit() { this.loadMovies(); }
 
-  loadMovies() {
-    this.movieService.getMovies().subscribe({
-      next: (data) => { 
-        this.movies = data; 
-        this.filteredMovies = data; 
+  loadMovies(page: number = 0) {
+    this.movieService.getMovies(page).subscribe({
+      next: (data: any) => { 
+        // 1. Grab the array from the 'content' property
+        this.movies = data.content; 
+        this.filteredMovies = data.content; 
+        
+        // 2. Save the pagination metadata
+        this.currentPage = data.number;
+        this.totalPages = data.totalPages;
+
         this.cdr.detectChanges(); 
       },
       error: (err) => this.showToast("Connection to backend failed.")
     });
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages - 1) {
+      this.loadMovies(this.currentPage + 1);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 0) {
+      this.loadMovies(this.currentPage - 1);
+    }
   }
 
   getWatchlistMovies() {
