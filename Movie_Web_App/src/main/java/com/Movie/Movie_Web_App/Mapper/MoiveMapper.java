@@ -21,6 +21,7 @@ public class MoiveMapper {
                .plot(movie.getPlot())
                .poster(movie.getPoster())
                .userRating(movie.getUserRating())
+               .imdbRating(movie.getImdbRating())
                .build();
     }
    
@@ -38,6 +39,7 @@ public class MoiveMapper {
                .plot(moviedto.getPlot())
                .poster(moviedto.getPoster())
                .userRating(moviedto.getUserRating())
+               .imdbRating(moviedto.getImdbRating())
                .build();
     }
 }

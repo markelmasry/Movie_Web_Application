@@ -19,6 +19,7 @@ public class MovieDto {
     private String director;
     private String plot;
     private String poster;
+    private Double imdbRating; 
     private Double userRating;
 
 }

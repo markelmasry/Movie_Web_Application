@@ -28,6 +28,7 @@ public class Movie {
     @Column(length = 1000) // Plots can be long
     private String plot;
     private String poster;
+    private Double imdbRating; 
     private Double userRating;
 
 }

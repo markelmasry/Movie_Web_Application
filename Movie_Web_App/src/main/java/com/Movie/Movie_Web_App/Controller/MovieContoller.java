@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,6 +54,11 @@ public class MovieContoller {
     @DeleteMapping("/DeleteMoviesBatch")
     public ResponseEntity<List<Long>> DeleteMoviesBatch(@RequestBody List<Long> moviesIds) {
        return ResponseEntity.ok(movieService.batchDeleteMovies(moviesIds));
+    }
+    @PatchMapping("/{movieId}")
+    public ResponseEntity<MovieDto> updateRating(@PathVariable Long movieId, @RequestBody MovieDto movieDto) {
+        // We expect the movieDto to contain the new userRating
+        return ResponseEntity.ok(movieService.updateMovieRating(movieId, movieDto.getUserRating()));
     }
 
 }

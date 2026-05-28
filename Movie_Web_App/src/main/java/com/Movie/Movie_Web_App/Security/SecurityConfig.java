@@ -30,15 +30,17 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(request -> {
                 CorsConfiguration cfg = new CorsConfiguration();
                 cfg.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
-                cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
                 cfg.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
                 cfg.setAllowCredentials(true);
                 return cfg;
         }))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/Movies/search/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/Movies/AllMovies").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/Movies/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/Movies/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/Movies/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/Movies/MovieDetails/**").hasRole("ADMIN")

@@ -103,4 +103,14 @@ public OmdbMovieItemResponse getMovieDetails(String imdbId) {
                      .map(moiveMapper::toDto)
                      .toList();
     }
+    
+    public MovieDto updateMovieRating(Long movieId, Double newRating) {
+    
+        Movie movie = movierepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found with ID: " + movieId));
+
+        movie.setUserRating(newRating);
+        Movie updatedMovie = movierepository.save(movie);
+        return moiveMapper.toDto(updatedMovie);
+    }
 }

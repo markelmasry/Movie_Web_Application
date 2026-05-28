@@ -57,4 +57,9 @@ getOmdbDetails(imdbId: string): Observable<any> {
       body: ids 
     });
   }
+
+updateMovieRating(id: number, data: { userRating: number }): Observable<any> {
+  // We send a PATCH request to update only the rating part of the movie record
+  return this.http.patch(`${this.apiUrl}/${id}`, data, { headers: this.getHeaders() });
+}
 }

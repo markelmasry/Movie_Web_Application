@@ -35,7 +35,7 @@ import { MovieService } from '../movie.service';
             <div class="details-content">
               <h2 class="details-title">{{selectedMovie?.title}}</h2>
               <div class="details-meta">
-                <span class="match-text">★ {{selectedMovie?.userRating || 'N/A'}} / 10</span>
+                <span class="match-text">★ {{selectedMovie?.imdbRating || 'N/A'}} / 10</span>
                 <span class="year-text">{{selectedMovie?.movieYear}}</span>
                 <span class="hd-badge">{{selectedMovie?.genre || 'Action'}}</span>
               </div>
@@ -51,6 +51,24 @@ import { MovieService } from '../movie.service';
               <div class="details-actions">
                 <button class="play-btn" style="padding: 10px 25px; font-size: 1rem;" (click)="playMovie(selectedMovie?.title); closeDetails()">▶ Play</button>
                 <button class="circle-btn" style="width: 40px; height: 40px; font-size: 1.2rem;" (click)="addToList(selectedMovie?.title)">+</button>
+                
+                <div class="rating-picker">
+                  <div class="star-container" [style.pointer-events]="selectedMovie?.userRating ? 'none' : 'auto'">
+                    <span *ngFor="let s of [1,2,3,4,5,6,7,8,9,10]" 
+                          class="star" 
+                          [class.filled]="(hoverRating || selectedMovie?.userRating || userRatingInput || 0) >= s"
+                          (mouseenter)="!selectedMovie?.userRating ? hoverRating = s : null"
+                          (mouseleave)="hoverRating = null"
+                          (click)="setRatingAndSubmit(selectedMovie.id, s)">
+                      ★
+                    </span>
+                  </div>
+                  <span class="rating-value" *ngIf="hoverRating || selectedMovie?.userRating || userRatingInput">
+                    {{ hoverRating || selectedMovie?.userRating || userRatingInput }} / 10
+                  </span>
+                  <span *ngIf="selectedMovie?.userRating" style="font-size: 0.65rem; color: #888; margin-top: 2px;"></span>
+                </div>
+
               </div>
             </div>
           </div>
@@ -141,11 +159,9 @@ import { MovieService } from '../movie.service';
   styles: [`
     .app-container { background: #0a0a0a; color: white; min-height: 100vh; font-family: Helvetica, sans-serif; overflow-x: hidden; }
     
-    /* TOAST STYLES */
     .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(229, 9, 20, 0.9); color: white; padding: 12px 25px; border-radius: 4px; font-weight: bold; z-index: 9999; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px); pointer-events: none; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    /* GENERIC MODAL STYLES */
     .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(5px); }
     .custom-modal { background: #141414; border: 1px solid #333; padding: 30px; border-radius: 8px; width: 350px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.8); animation: popIn 0.3s ease; position: relative; }
     .custom-modal h3 { margin-top: 0; font-size: 1.5rem; color: #fff; }
@@ -158,7 +174,6 @@ import { MovieService } from '../movie.service';
     .modal-btn.primary:hover { background: #f40612; }
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    /* MOVIE DETAILS MODAL (SIDE-BY-SIDE) */
     .details-modal { width: 750px; padding: 0; overflow: hidden; text-align: left; background: #181818; }
     .close-details-btn { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: 2px solid white; border-radius: 50%; width: 35px; height: 35px; font-size: 1rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
     .close-details-btn:hover { background: white; color: black; }
@@ -173,7 +188,13 @@ import { MovieService } from '../movie.service';
     .details-desc { color: #ddd; line-height: 1.6; font-size: 1rem; margin-bottom: 30px; }
     .details-actions { display: flex; gap: 15px; align-items: center; margin-top: auto; }
 
-    /* NAVBAR */
+    .rating-picker { display: flex; flex-direction: column; align-items: center; margin-left: 10px; }
+    .star-container { display: flex; gap: 3px; cursor: pointer; }
+    .star { font-size: 1.4rem; color: #333; transition: transform 0.1s; }
+    .star:hover { transform: scale(1.2); }
+    .star.filled { color: #ffb400; }
+    .rating-value { font-size: 0.75rem; color: #ffb400; font-weight: bold; margin-top: 4px; }
+
     .navbar { position: fixed; top: 0; width: 100%; padding: 20px 4%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transition: background 0.4s ease; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); box-sizing: border-box; }
     .navbar.scrolled { background: #141414; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
     .logo { color: #E50914; font-size: 1.8rem; margin: 0; font-weight: bold; }
@@ -186,7 +207,6 @@ import { MovieService } from '../movie.service';
     .sign-out-btn { background: transparent; border: 1px solid #fff; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
     .sign-out-btn:hover { background: white; color: black; }
     
-    /* HERO */
     .hero-section { height: 85vh; background: url('https://images.unsplash.com/photo-1534809027769-b00d750a6bac?q=80&w=2000') center/cover; position: relative; }
     .hero-overlay { height: 100%; background: linear-gradient(to right, #0a0a0a 10%, transparent 70%), linear-gradient(to top, #0a0a0a, transparent 30%); display: flex; align-items: center; padding-left: 4%; }
     .hero-content { margin-top: 50px; }
@@ -197,7 +217,6 @@ import { MovieService } from '../movie.service';
     .more-info-btn { padding: 10px 30px; background: rgba(109, 109, 110, 0.7); color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-left: 10px; transition: 0.2s; }
     .more-info-btn:hover { background: rgba(109, 109, 110, 0.4); }
     
-    /* MOVIE GRID */
     .row { padding: 0 4%; margin-top: -80px; position: relative; z-index: 10; padding-bottom: 50px; }
     .row-header { font-size: 1.4rem; margin-bottom: 15px; }
     .movie-grid { display: flex; gap: 15px; overflow-x: auto; padding: 20px 0; scrollbar-width: none; }
@@ -214,13 +233,11 @@ import { MovieService } from '../movie.service';
     .card-title { margin: 0 0 5px 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
     .match-text { color: #46d369; font-weight: bold; font-size: 0.8rem; }
 
-    /* MY LIST PAGE */
     .list-page { padding: 100px 4% 50px 4%; min-height: 100vh; animation: popIn 0.3s ease; }
     .empty-state { text-align: center; margin-top: 50px; }
     .wrap-grid { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; }
     .wrap-grid .movie-card { margin-bottom: 15px; }
 
-    /* VIDEO PLAYER STYLES */
     .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; display: flex; justify-content: center; align-items: center; z-index: 20000; animation: popIn 0.3s ease; }
     .video-wrapper { width: 90vw; max-width: 1200px; background: #000; box-shadow: 0 0 50px rgba(0,0,0,0.9); }
     .close-video-btn { position: absolute; top: 30px; right: 40px; background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 1.2rem; font-weight: bold; cursor: pointer; z-index: 20001; transition: 0.3s; }
@@ -232,21 +249,18 @@ export class UserDashboardComponent implements OnInit {
   filteredMovies: any[] = [];
   searchTerm: string = '';
   isScrolled: boolean = false;
+  userRatingInput: number | null = null;
+  hoverRating: number | null = null;
   
-  // Stores titles to track what is saved
   myList: string[] = []; 
-  
   viewMode: 'home' | 'list' = 'home'; 
   toastMsg = '';
   showLogoutModal = false;
-
-  // Details Modal States
   showDetailsModal = false;
   selectedMovie: any = null;
-
-  // Video Player States
   showVideoPlayer = false;
   currentVideoUrl = '';
+  isSubmitting = false;
 
   constructor(private movieService: MovieService, private router: Router, private cdr: ChangeDetectorRef) {}
 
@@ -289,6 +303,42 @@ export class UserDashboardComponent implements OnInit {
     this.showVideoPlayer = false;
     this.currentVideoUrl = ''; 
   }
+  
+  setRatingAndSubmit(movieId: number, rating: number) {
+    // 1. BLOCK: Check if movie already has a rating
+    if (this.selectedMovie?.userRating > 0) {
+      this.showToast("You have already rated this movie.");
+      return;
+    }
+
+    if (this.isSubmitting) return; 
+    
+    this.isSubmitting = true;
+    this.userRatingInput = rating;
+
+    const updatedData = { userRating: rating };
+
+    this.movieService.updateMovieRating(movieId, updatedData).subscribe({
+      next: (res: any) => {
+        if (this.selectedMovie) {
+          this.selectedMovie.userRating = rating;
+        }
+        
+        const movieInList = this.movies.find(m => m.id === movieId);
+        if (movieInList) {
+          movieInList.userRating = rating;
+        }
+
+        this.showToast(`⭐ Rating saved! (${rating}/10)`);
+        this.isSubmitting = false;
+        this.userRatingInput = null;
+      },
+      error: (err: any) => {
+        this.showToast("Failed to save rating.");
+        this.isSubmitting = false;
+      }
+    });
+  }
 
   addToList(title: string) {
     if (!this.myList.includes(title)) {
@@ -311,6 +361,8 @@ export class UserDashboardComponent implements OnInit {
 
   closeDetails() {
     this.showDetailsModal = false;
+    this.userRatingInput = null;
+    this.hoverRating = null;
     setTimeout(() => { this.selectedMovie = null; }, 300);
   }
 

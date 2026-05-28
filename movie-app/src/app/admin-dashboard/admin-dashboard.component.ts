@@ -105,7 +105,7 @@ import { Router } from '@angular/router';
                   </td>
                   <td style="color: #bbb;">{{movie.director || 'N/A'}}</td>
                   <td><span class="genre-badge">{{movie.genre || 'N/A'}}</span></td>
-                  <td style="color: #f5c518; font-weight: bold;">★ {{movie.userRating || '0.0'}}</td>
+                  <td style="color: #f5c518; font-weight: bold;">★ {{movie.imdbRating || '0.0'}}</td>
                   <td>
                     <button (click)="movieToDelete = movie.id" class="del-btn">DECOMMISSION</button>
                   </td>
@@ -240,7 +240,7 @@ export class AdminDashboardComponent implements OnInit {
     if (!this.omdbSearchQuery) return;
     this.movieService.searchOmdb(this.omdbSearchQuery).subscribe({
       next: (res: any) => {
-        // Handle both case-sensitivities from different API versions
+
         const results = res.search || res.Search;
         if (results && results.length > 0) {
           this.searchResults = results;
@@ -258,7 +258,7 @@ export class AdminDashboardComponent implements OnInit {
   selectMovie(imdbID: string) {
     this.movieService.getOmdbDetails(imdbID).subscribe({
       next: (res: any) => {
-        // Syncing DTO property names between Backend and Frontend
+        
         this.omdbResult = {
           title: res.title || res.Title,
           movieYear: res.movieYear || res.Year || res.year,
@@ -291,7 +291,7 @@ export class AdminDashboardComponent implements OnInit {
       genre: this.omdbResult.genre,
       director: this.omdbResult.director,
       plot: this.omdbResult.plot,
-      userRating: (this.omdbResult.imdbRating && this.omdbResult.imdbRating !== 'N/A') 
+      imdbRating: (this.omdbResult.imdbRating && this.omdbResult.imdbRating !== 'N/A') 
                    ? parseFloat(this.omdbResult.imdbRating) 
                    : 0.0
     };
