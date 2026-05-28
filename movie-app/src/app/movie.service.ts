@@ -21,7 +21,7 @@ export class MovieService {
 
 // Change Observable<any[]> to Observable<any>
 getMovies(page: number = 0): Observable<any> {
-  return this.http.get(`${this.apiUrl}?page=${page}&size=6`, { 
+  return this.http.get(`${this.apiUrl}?page=${page}&size=25`, { 
     headers: this.getHeaders() 
   });
 }

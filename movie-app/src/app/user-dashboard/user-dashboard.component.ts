@@ -161,7 +161,7 @@ import { MovieService } from '../movie.service';
           <button class="modal-btn secondary" (click)="viewMode = 'home'" style="margin-top: 15px; max-width: 200px;">Browse Movies</button>
         </div>
 
-        <div class="movie-grid wrap-grid" *ngIf="myList.length > 0">
+        <div class="movie-grid" *ngIf="myList.length > 0">
           <div *ngFor="let movie of getWatchlistMovies()" class="movie-card">
             <img [src]="movie.poster" class="poster" onerror="this.src='https://placehold.co/200x300/222/fff?text=No+Poster'">
             <div class="card-details">
@@ -241,10 +241,32 @@ import { MovieService } from '../movie.service';
     .more-info-btn:hover { background: rgba(109, 109, 110, 0.4); }
     
     .row { padding: 0 4%; margin-top: -80px; position: relative; z-index: 10; padding-bottom: 50px; }
-    .row-header { font-size: 1.4rem; margin-bottom: 15px; }
-    .movie-grid { display: flex; gap: 15px; overflow-x: auto; padding: 20px 0; scrollbar-width: none; }
-    .movie-grid::-webkit-scrollbar { display: none; }
-    .movie-card { flex: 0 0 220px; height: 330px; position: relative; border-radius: 4px; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); cursor: pointer; background: #181818; }
+    
+    /* Centered Row Header */
+    .row-header { font-size: 1.4rem; margin-bottom: 15px; text-align: center; }
+    
+    /* --- NEW GRID LAYOUT --- */
+    .movie-grid { 
+      display: grid; 
+      grid-template-columns: repeat(5, 1fr); 
+      gap: 20px; 
+      max-width: 1200px; /* Limits width so movies don't stretch forever */
+      margin: 0 auto;    /* Centers the entire grid on the page */
+      padding: 20px 0; 
+      justify-items: center; 
+    }
+    
+    .movie-card { 
+      width: 100%;       /* Fills its 1/5th column perfectly */
+      max-width: 220px;  /* Prevents it from getting too large on huge monitors */
+      height: 330px; 
+      position: relative; 
+      border-radius: 4px; 
+      transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+      cursor: pointer; 
+      background: #181818; 
+    }
+    
     .movie-card:hover { transform: scale(1.15); z-index: 50; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
     .poster { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
     .card-details { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9) 50%, transparent); padding: 20px 15px 15px; opacity: 0; transition: opacity 0.3s; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; box-sizing: border-box; }
@@ -258,8 +280,8 @@ import { MovieService } from '../movie.service';
 
     .list-page { padding: 100px 4% 50px 4%; min-height: 100vh; animation: popIn 0.3s ease; }
     .empty-state { text-align: center; margin-top: 50px; }
-    .wrap-grid { flex-wrap: wrap; justify-content: flex-start; overflow-x: visible; }
-    .wrap-grid .movie-card { margin-bottom: 15px; }
+    
+    /* Removed .wrap-grid because CSS Grid auto-wraps down automatically */
 
     .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; display: flex; justify-content: center; align-items: center; z-index: 20000; animation: popIn 0.3s ease; }
     .video-wrapper { width: 90vw; max-width: 1200px; background: #000; box-shadow: 0 0 50px rgba(0,0,0,0.9); }
