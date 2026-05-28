@@ -28,7 +28,7 @@ A professional, full-stack movie management application built with **Spring Boot
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
 | **GET** | `/api/Movies?page=0&size=10` | User/Admin | Fetch paginated list of local movies. |
-| **GET** | `/api/Movies/search/{title}` | Public | Proxy search query to the OMDB API. |
+| **GET** | `/api/Movies/search/{title}` | Admin | Proxy search query to the OMDB API. |
 | **GET** | `/api/Movies/MovieDetails/{imdbId}`| User/Admin | Fetch detailed metadata for a specific IMDB ID. |
 | **POST** | `/api/Movies/AddMovie` | Admin | Manually add a single movie to the database. |
 | **POST** | `/api/Movies/AddMoviesBatch` | Admin | Deploy a list of movies to the database. |
