@@ -5,7 +5,7 @@ import com.Movie.Movie_Web_App.Dto.MovieDto;
 import com.Movie.Movie_Web_App.Entity.Movie;
 
 @Component
-public class MoiveMapper {
+public class MovieMapper {
     
     public MovieDto toDto(Movie movie)
     {

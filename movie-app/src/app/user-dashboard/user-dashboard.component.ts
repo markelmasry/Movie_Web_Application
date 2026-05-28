@@ -15,7 +15,7 @@ import { MovieService } from '../movie.service';
       <div class="custom-modal-overlay" *ngIf="showLogoutModal">
         <div class="custom-modal">
           <h3>Sign Out</h3>
-          <p>Are you sure you want to leave Netflix?</p>
+          <p>Are you sure you want to leave your session?</p>
           <div class="modal-actions">
             <button class="modal-btn secondary" (click)="showLogoutModal = false">Cancel</button>
             <button class="modal-btn primary" (click)="confirmLogout()">Sign Out</button>
@@ -41,7 +41,7 @@ import { MovieService } from '../movie.service';
               </div>
               
               <p class="details-director" *ngIf="selectedMovie?.director">
-                <strong>Director:</strong> {{selectedMovie?.director}}
+                <strong>Director:</strong> <span>{{selectedMovie?.director}}</span>
               </p>
               
               <p class="details-desc">
@@ -49,8 +49,8 @@ import { MovieService } from '../movie.service';
               </p>
               
               <div class="details-actions">
-                <button class="play-btn" style="padding: 10px 25px; font-size: 1rem;" (click)="playMovie(selectedMovie?.title); closeDetails()">▶ Play</button>
-                <button class="circle-btn" style="width: 40px; height: 40px; font-size: 1.2rem;" (click)="addToList(selectedMovie?.title)">+</button>
+                <button class="action-btn play-btn" (click)="playMovie(selectedMovie?.title); closeDetails()">▶ Play</button>
+                <button class="circle-btn" (click)="addToList(selectedMovie?.title)">+</button>
                 
                 <div class="rating-picker">
                   <div class="star-container" [style.pointer-events]="selectedMovie?.userRating ? 'none' : 'auto'">
@@ -66,9 +66,7 @@ import { MovieService } from '../movie.service';
                   <span class="rating-value" *ngIf="hoverRating || selectedMovie?.userRating || userRatingInput">
                     {{ hoverRating || selectedMovie?.userRating || userRatingInput }} / 10
                   </span>
-                  <span *ngIf="selectedMovie?.userRating" style="font-size: 0.65rem; color: #888; margin-top: 2px;"></span>
                 </div>
-
               </div>
             </div>
           </div>
@@ -87,12 +85,17 @@ import { MovieService } from '../movie.service';
 
       <nav class="navbar" [class.scrolled]="isScrolled || viewMode === 'list'">
         <div class="nav-left">
-          <h1 class="logo" style="cursor: pointer;" (click)="viewMode = 'home'">NETFLIX</h1>
-          <span class="nav-link" [class.active]="viewMode === 'home'" (click)="viewMode = 'home'">Home</span>
-          <span class="nav-link" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">My List</span>
+          <h1 class="logo" (click)="viewMode = 'home'">NETFLIX</h1>
+          <div class="nav-links">
+            <span class="nav-link" [class.active]="viewMode === 'home'" (click)="viewMode = 'home'">Home</span>
+            <span class="nav-link" [class.active]="viewMode === 'list'" (click)="viewMode = 'list'">My List</span>
+          </div>
         </div>
-        <div class="nav-right" style="display: flex; gap: 20px; align-items: center;">
-          <input [(ngModel)]="searchTerm" (input)="filterMovies()" placeholder="🔍 Titles..." class="search-input">
+        <div class="nav-right">
+          <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input [(ngModel)]="searchTerm" (input)="filterMovies()" placeholder="Search titles..." class="search-input">
+          </div>
           <button (click)="showLogoutModal = true" class="sign-out-btn">Sign Out</button>
         </div>
       </nav>
@@ -101,11 +104,12 @@ import { MovieService } from '../movie.service';
         <div class="hero-section">
           <div class="hero-overlay">
             <div class="hero-content">
-              <h1 class="hero-title">GUARDIANS OF THE GALAXY</h1>
+              <span class="hero-tag">TRENDING NOW</span>
+              <h1 class="hero-title">GUARDIANS OF<br>THE GALAXY</h1>
               <p class="hero-desc">The Guardians struggle to keep together as a team while dealing with their personal family issues, notably Star-Lord's encounter with his father.</p>
               <div class="hero-btns">
-                <button class="play-btn" (click)="playMovie('Guardians of the Galaxy: Vol. 2')">▶ Play</button>
-                <button class="more-info-btn" (click)="openDetails({title: 'Guardians of the Galaxy: Vol. 2', movieYear: '2017', genre: 'Action, Adventure, Comedy', director: 'James Gunn', plot: 'The Guardians struggle to keep together as a team while dealing with their personal family issues...', poster: 'https://m.media-amazon.com/images/M/MV5BNWE5MGI3MDctMmU5Ni00YzI2LWEzMTQtZGIyZDA5MzQzNDBhXkEyXkFqcGc@._V1_QL75_UX380_CR0,1,380,562_.jpg', userRating: 7.6})">ℹ More Info</button>
+                <button class="action-btn play-btn" (click)="playMovie('Guardians of the Galaxy: Vol. 2')">▶ Play</button>
+                <button class="action-btn info-btn-hero" (click)="openDetails({title: 'Guardians of the Galaxy: Vol. 2', movieYear: '2017', genre: 'Action, Adventure, Comedy', director: 'James Gunn', plot: 'The Guardians struggle to keep together as a team while dealing with their personal family issues...', poster: 'https://m.media-amazon.com/images/M/MV5BNWE5MGI3MDctMmU5Ni00YzI2LWEzMTQtZGIyZDA5MzQzNDBhXkEyXkFqcGc@._V1_QL75_UX380_CR0,1,380,562_.jpg', userRating: 7.6})">ℹ More Info</button>
               </div>
             </div>
           </div>
@@ -128,28 +132,11 @@ import { MovieService } from '../movie.service';
             </div>
           </div>
           
-          <div class="pagination-controls" style="display: flex; justify-content: center; gap: 15px; margin-top: 20px; padding-bottom: 20px;">
-            <button class="modal-btn secondary" 
-                    [disabled]="currentPage === 0" 
-                    (click)="prevPage()"
-                    [style.opacity]="currentPage === 0 ? '0.5' : '1'"
-                    style="max-width: 150px;">
-              ◀ Previous
-            </button>
-            
-            <span style="display: flex; align-items: center; font-weight: bold; color: #aaa;">
-              Page {{ currentPage + 1 }} of {{ totalPages || 1 }}
-            </span>
-            
-            <button class="modal-btn secondary" 
-                    [disabled]="currentPage >= totalPages - 1" 
-                    (click)="nextPage()"
-                    [style.opacity]="currentPage >= totalPages - 1 ? '0.5' : '1'"
-                    style="max-width: 150px;">
-              Next ▶
-            </button>
+          <div class="pagination-controls">
+            <button class="page-btn" [disabled]="currentPage === 0" (click)="prevPage()">◀ Prev</button>
+            <span class="page-indicator">Page {{ currentPage + 1 }} of {{ totalPages || 1 }}</span>
+            <button class="page-btn" [disabled]="currentPage >= totalPages - 1" (click)="nextPage()">Next ▶</button>
           </div>
-
         </div>
       </div>
 
@@ -157,8 +144,9 @@ import { MovieService } from '../movie.service';
         <h2 class="row-header">My Watchlist</h2>
         
         <div class="empty-state" *ngIf="myList.length === 0">
-          <p style="color:#888; font-size: 1.2rem;">Your list is empty. Add movies using the + button.</p>
-          <button class="modal-btn secondary" (click)="viewMode = 'home'" style="margin-top: 15px; max-width: 200px;">Browse Movies</button>
+          <div class="empty-icon">🎬</div>
+          <p>Your list is feeling a bit empty.</p>
+          <button class="action-btn play-btn" (click)="viewMode = 'home'">Browse Movies</button>
         </div>
 
         <div class="movie-grid" *ngIf="myList.length > 0">
@@ -180,113 +168,124 @@ import { MovieService } from '../movie.service';
     </div>
   `,
   styles: [`
-    .app-container { background: #0a0a0a; color: white; min-height: 100vh; font-family: Helvetica, sans-serif; overflow-x: hidden; }
+    /* GLOBAL & UTILS */
+    .app-container { background: #080808; color: #f5f5f5; min-height: 100vh; font-family: 'Inter', -apple-system, sans-serif; overflow-x: hidden; }
     
-    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(229, 9, 20, 0.9); color: white; padding: 12px 25px; border-radius: 4px; font-weight: bold; z-index: 9999; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; box-shadow: 0 5px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px); pointer-events: none; }
+    /* TOAST */
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(229, 9, 20, 0.95); color: white; padding: 12px 28px; border-radius: 30px; font-weight: 600; font-size: 0.95rem; z-index: 9999; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; box-shadow: 0 10px 25px rgba(229, 9, 20, 0.3); backdrop-filter: blur(10px); pointer-events: none; border: 1px solid rgba(255,255,255,0.1); }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(5px); }
-    .custom-modal { background: #141414; border: 1px solid #333; padding: 30px; border-radius: 8px; width: 350px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.8); animation: popIn 0.3s ease; position: relative; }
-    .custom-modal h3 { margin-top: 0; font-size: 1.5rem; color: #fff; }
-    .custom-modal p { color: #aaa; margin-bottom: 25px; line-height: 1.5; }
+    /* MODERN MODALS (Glassmorphism) */
+    .custom-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(8px); }
+    .custom-modal { background: rgba(20, 20, 20, 0.85); border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 16px; width: 380px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5); animation: popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-sizing: border-box; }
+    .custom-modal h3 { margin-top: 0; font-size: 1.5rem; color: #fff; font-weight: 700; }
+    .custom-modal p { color: #a0a0a0; margin-bottom: 30px; line-height: 1.6; font-size: 0.95rem; }
     .modal-actions { display: flex; gap: 15px; justify-content: center; }
-    .modal-btn { padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem; flex: 1; transition: 0.2s; }
-    .modal-btn.secondary { background: #333; color: white; border: 1px solid #555; }
-    .modal-btn.secondary:hover { background: #444; }
-    .modal-btn.primary { background: #E50914; color: white; }
-    .modal-btn.primary:hover { background: #f40612; }
-    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; flex: 1; transition: all 0.2s ease; }
+    .modal-btn.secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.05); }
+    .modal-btn.secondary:hover { background: rgba(255,255,255,0.15); }
+    .modal-btn.primary { background: #E50914; color: white; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); }
+    .modal-btn.primary:hover { background: #f40612; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4); }
 
-    .details-modal { width: 750px; padding: 0; overflow: hidden; text-align: left; background: #181818; }
-    .close-details-btn { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: 2px solid white; border-radius: 50%; width: 35px; height: 35px; font-size: 1rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-    .close-details-btn:hover { background: white; color: black; }
-    .details-layout { display: flex; min-height: 400px; }
-    .details-poster-container { flex: 0 0 300px; background: #111; }
+    /* DETAILS MODAL */
+    .details-modal { width: 850px; padding: 0; overflow: hidden; text-align: left; display: flex; flex-direction: column; }
+    .close-details-btn { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 36px; height: 36px; font-size: 1rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; backdrop-filter: blur(4px); }
+    .close-details-btn:hover { background: white; color: black; transform: scale(1.1); }
+    .details-layout { display: flex; min-height: 450px; }
+    .details-poster-container { flex: 0 0 320px; }
     .details-poster { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .details-content { flex: 1; padding: 40px 30px; display: flex; flex-direction: column; justify-content: center; }
-    .details-title { font-size: 2.2rem; margin: 0 0 10px 0; font-weight: 800; line-height: 1.1; }
-    .details-meta { display: flex; gap: 12px; align-items: center; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; flex-wrap: wrap; }
-    .hd-badge { border: 1px solid #aaa; padding: 2px 6px; border-radius: 3px; font-size: 0.75rem; color: #aaa; }
-    .details-director { font-size: 0.9rem; color: #bbb; margin: 0 0 15px 0; }
-    .details-desc { color: #ddd; line-height: 1.6; font-size: 1rem; margin-bottom: 30px; }
-    .details-actions { display: flex; gap: 15px; align-items: center; margin-top: auto; }
+    .details-content { flex: 1; padding: 40px; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(135deg, rgba(20,20,20,0.9) 0%, rgba(30,30,30,0.9) 100%); }
+    .details-title { font-size: 2.5rem; margin: 0 0 12px 0; font-weight: 800; line-height: 1.1; letter-spacing: -0.5px; }
+    .details-meta { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; font-weight: 600; font-size: 0.9rem; }
+    .hd-badge { border: 1px solid rgba(255,255,255,0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; color: #ddd; letter-spacing: 0.5px; }
+    .details-director { font-size: 0.95rem; color: #aaa; margin: 0 0 20px 0; }
+    .details-director span { color: #fff; font-weight: 500; }
+    .details-desc { color: #bbb; line-height: 1.7; font-size: 1.05rem; margin-bottom: 35px; font-weight: 400; }
+    .details-actions { display: flex; gap: 20px; align-items: center; margin-top: auto; }
 
-    .rating-picker { display: flex; flex-direction: column; align-items: center; margin-left: 10px; }
-    .star-container { display: flex; gap: 3px; cursor: pointer; }
-    .star { font-size: 1.4rem; color: #333; transition: transform 0.1s; }
+    /* RATING SYSTEM */
+    .rating-picker { display: flex; flex-direction: column; align-items: center; margin-left: auto; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+    .star-container { display: flex; gap: 4px; cursor: pointer; }
+    .star { font-size: 1.3rem; color: #444; transition: all 0.2s ease; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
     .star:hover { transform: scale(1.2); }
-    .star.filled { color: #ffb400; }
-    .rating-value { font-size: 0.75rem; color: #ffb400; font-weight: bold; margin-top: 4px; }
+    .star.filled { color: #FFC107; text-shadow: 0 0 10px rgba(255, 193, 7, 0.4); }
+    .rating-value { font-size: 0.8rem; color: #FFC107; font-weight: 700; margin-top: 6px; letter-spacing: 1px; }
 
-    .navbar { position: fixed; top: 0; width: 100%; padding: 20px 4%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transition: background 0.4s ease; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); box-sizing: border-box; }
-    .navbar.scrolled { background: #141414; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-    .logo { color: #E50914; font-size: 1.8rem; margin: 0; font-weight: bold; }
-    .nav-left { display: flex; align-items: center; gap: 30px; }
-    .nav-link { font-size: 0.9rem; cursor: pointer; color: #e5e5e5; transition: color 0.3s; }
-    .nav-link:hover { color: #b3b3b3; }
-    .nav-link.active { font-weight: bold; color: #fff; }
-    .search-input { padding: 8px 15px; background: rgba(0,0,0,0.6); border: 1px solid #fff; color: white; border-radius: 4px; width: 150px; transition: 0.3s; }
-    .search-input:focus { width: 220px; outline: none; background: rgba(0,0,0,0.8); }
-    .sign-out-btn { background: transparent; border: 1px solid #fff; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-    .sign-out-btn:hover { background: white; color: black; }
+    /* MODERN NAVBAR */
+    .navbar { position: fixed; top: 0; width: 100%; padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; transition: all 0.4s ease; background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%); box-sizing: border-box; }
+    .navbar.scrolled { background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(15px); box-shadow: 0 4px 30px rgba(0,0,0,0.5); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 5%; }
+    .logo { color: #E50914; font-size: 2rem; margin: 0; font-weight: 900; letter-spacing: -1px; cursor: pointer; text-shadow: 0 2px 10px rgba(229,9,20,0.3); }
+    .nav-left { display: flex; align-items: center; gap: 40px; }
+    .nav-links { display: flex; gap: 25px; }
+    .nav-link { font-size: 0.95rem; cursor: pointer; color: #aaa; transition: all 0.3s ease; font-weight: 500; position: relative; }
+    .nav-link:hover { color: #fff; }
+    .nav-link.active { font-weight: 700; color: #fff; }
+    .nav-link.active::after { content: ''; position: absolute; bottom: -6px; left: 0; width: 100%; height: 2px; background: #E50914; border-radius: 2px; }
     
+    .nav-right { display: flex; gap: 25px; align-items: center; }
+    .search-container { position: relative; display: flex; align-items: center; }
+    .search-icon { position: absolute; left: 12px; font-size: 0.9rem; opacity: 0.7; }
+    .search-input { padding: 10px 15px 10px 35px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 20px; width: 200px; transition: all 0.3s ease; font-size: 0.9rem; backdrop-filter: blur(4px); }
+    .search-input:focus { width: 260px; outline: none; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); box-shadow: 0 0 15px rgba(255,255,255,0.05); }
+    .sign-out-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; font-size: 0.9rem; }
+    .sign-out-btn:hover { background: white; color: black; transform: translateY(-2px); }
+    
+    /* HERO SECTION */
     .hero-section { height: 85vh; background: url('https://images.unsplash.com/photo-1534809027769-b00d750a6bac?q=80&w=2000') center/cover; position: relative; }
-    .hero-overlay { height: 100%; background: linear-gradient(to right, #0a0a0a 10%, transparent 70%), linear-gradient(to top, #0a0a0a, transparent 30%); display: flex; align-items: center; padding-left: 4%; }
-    .hero-content { margin-top: 50px; }
-    .hero-title { font-size: 4rem; font-weight: 900; margin-bottom: 20px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
-    .hero-desc { max-width: 500px; font-size: 1.2rem; line-height: 1.4; margin-bottom: 25px; color: #fff; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); font-weight: 500; }
-    .play-btn { padding: 10px 30px; background: white; color: black; border: none; border-radius: 4px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
-    .play-btn:hover { background: rgba(255,255,255,0.7); }
-    .more-info-btn { padding: 10px 30px; background: rgba(109, 109, 110, 0.7); color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-left: 10px; transition: 0.2s; }
-    .more-info-btn:hover { background: rgba(109, 109, 110, 0.4); }
+    .hero-overlay { height: 100%; background: linear-gradient(90deg, rgba(8,8,8,1) 0%, rgba(8,8,8,0.6) 50%, transparent 100%), linear-gradient(0deg, rgba(8,8,8,1) 0%, transparent 40%); display: flex; align-items: center; padding-left: 5%; }
+    .hero-content { margin-top: 60px; max-width: 600px; }
+    .hero-tag { display: inline-block; padding: 4px 10px; background: rgba(229, 9, 20, 0.2); border: 1px solid rgba(229, 9, 20, 0.5); color: #ff4b55; border-radius: 4px; font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 15px; }
+    .hero-title { font-size: 4.5rem; font-weight: 900; margin: 0 0 20px 0; line-height: 1.05; letter-spacing: -1px; text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+    .hero-desc { font-size: 1.2rem; line-height: 1.6; margin-bottom: 35px; color: #d0d0d0; font-weight: 400; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
     
-    .row { padding: 0 4%; margin-top: -80px; position: relative; z-index: 10; padding-bottom: 50px; }
+    /* MODERN BUTTONS */
+    .hero-btns { display: flex; gap: 15px; }
+    .action-btn { padding: 12px 32px; border: none; border-radius: 8px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
+    .play-btn { background: #fff; color: #000; }
+    .play-btn:hover { background: #e6e6e6; transform: scale(1.05); }
+    .info-btn-hero { background: rgba(109, 109, 110, 0.7); color: white; backdrop-filter: blur(5px); }
+    .info-btn-hero:hover { background: rgba(109, 109, 110, 0.9); transform: scale(1.05); }
     
-    /* Centered Row Header */
-    .row-header { font-size: 1.4rem; margin-bottom: 15px; text-align: center; }
+    /* GRID & CARDS */
+    .row { padding: 0 5%; margin-top: -20px; position: relative; z-index: 10; padding-bottom: 60px; }    .row-header { font-size: 1.5rem; margin-bottom: 25px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .row-header::before { content: ''; display: block; width: 4px; height: 24px; background: #E50914; border-radius: 2px; }
     
-    /* --- NEW GRID LAYOUT --- */
-    .movie-grid { 
-      display: grid; 
-      grid-template-columns: repeat(5, 1fr); 
-      gap: 20px; 
-      max-width: 1200px; /* Limits width so movies don't stretch forever */
-      margin: 0 auto;    /* Centers the entire grid on the page */
-      padding: 20px 0; 
-      justify-items: center; 
-    }
+    .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; padding: 10px 0 30px; }
+    .movie-card { height: 340px; position: relative; border-radius: 12px; overflow: hidden; transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); cursor: pointer; background: #1a1a1a; box-shadow: 0 10px 20px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); }
+    .movie-card:hover { transform: translateY(-10px) scale(1.05); z-index: 50; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.2); }
+    .poster { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
     
-    .movie-card { 
-      width: 100%;       /* Fills its 1/5th column perfectly */
-      max-width: 220px;  /* Prevents it from getting too large on huge monitors */
-      height: 330px; 
-      position: relative; 
-      border-radius: 4px; 
-      transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
-      cursor: pointer; 
-      background: #181818; 
-    }
-    
-    .movie-card:hover { transform: scale(1.15); z-index: 50; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
-    .poster { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
-    .card-details { position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9) 50%, transparent); padding: 20px 15px 15px; opacity: 0; transition: opacity 0.3s; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; box-sizing: border-box; }
+    .card-details { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%); padding: 25px 20px 20px; opacity: 0; transition: all 0.3s ease; display: flex; flex-direction: column; justify-content: flex-end; backdrop-filter: blur(2px); }
     .movie-card:hover .card-details { opacity: 1; }
-    .action-row { display: flex; gap: 10px; margin-bottom: 10px; }
-    .circle-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.5); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: 0.2s; }
-    .circle-btn:hover { border-color: white; background: white; color: black; }
-    .info-btn { margin-left: auto; border-color: rgba(255,255,255,0.4); } 
-    .card-title { margin: 0 0 5px 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
-    .match-text { color: #46d369; font-weight: bold; font-size: 0.8rem; }
-
-    .list-page { padding: 100px 4% 50px 4%; min-height: 100vh; animation: popIn 0.3s ease; }
-    .empty-state { text-align: center; margin-top: 50px; }
+    .action-row { display: flex; gap: 12px; margin-bottom: 15px; }
     
-    /* Removed .wrap-grid because CSS Grid auto-wraps down automatically */
+    .circle-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.5); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s ease; backdrop-filter: blur(4px); }
+    .circle-btn:hover { border-color: white; background: white; color: black; transform: scale(1.1); }
+    .info-btn { margin-left: auto; border-color: rgba(255,255,255,0.3); } 
+    
+    .card-title { margin: 0 0 8px 0; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+    .match-text { color: #46d369; font-weight: 700; font-size: 0.85rem; }
 
-    .video-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; display: flex; justify-content: center; align-items: center; z-index: 20000; animation: popIn 0.3s ease; }
-    .video-wrapper { width: 90vw; max-width: 1200px; background: #000; box-shadow: 0 0 50px rgba(0,0,0,0.9); }
-    .close-video-btn { position: absolute; top: 30px; right: 40px; background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 4px; font-size: 1.2rem; font-weight: bold; cursor: pointer; z-index: 20001; transition: 0.3s; }
-    .close-video-btn:hover { background: #E50914; color: white; transform: scale(1.1); }
+    /* PAGINATION */
+    .pagination-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 40px; }
+    .page-btn { padding: 10px 24px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 30px; font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(4px); }
+    .page-btn:not([disabled]):hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .page-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+    .page-indicator { font-weight: 600; color: #aaa; font-size: 0.95rem; }
+
+    /* LIST PAGE */
+    .list-page { padding: 120px 5% 60px; min-height: 100vh; animation: popIn 0.4s ease; }
+    .empty-state { text-align: center; margin-top: 80px; padding: 60px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 16px; }
+    .empty-icon { font-size: 3rem; margin-bottom: 20px; opacity: 0.5; }
+    .empty-state p { color: #888; font-size: 1.2rem; margin-bottom: 25px; }
+
+    /* VIDEO PLAYER */
+    .video-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; z-index: 20000; backdrop-filter: blur(10px); animation: popIn 0.3s ease; }
+    .video-wrapper { width: 90vw; max-width: 1200px; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+    .close-video-btn { position: absolute; top: 30px; right: 40px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 10px 24px; border-radius: 30px; font-size: 1rem; font-weight: 600; cursor: pointer; z-index: 20001; transition: all 0.3s ease; backdrop-filter: blur(4px); }
+    .close-video-btn:hover { background: #E50914; border-color: #E50914; transform: scale(1.05); }
+
+    @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   `]
 })
 export class UserDashboardComponent implements OnInit {
@@ -318,14 +317,10 @@ export class UserDashboardComponent implements OnInit {
   loadMovies(page: number = 0) {
     this.movieService.getMovies(page).subscribe({
       next: (data: any) => { 
-        // 1. Grab the array from the 'content' property
         this.movies = data.content; 
         this.filteredMovies = data.content; 
-        
-        // 2. Save the pagination metadata
         this.currentPage = data.number;
         this.totalPages = data.totalPages;
-
         this.cdr.detectChanges(); 
       },
       error: (err) => this.showToast("Connection to backend failed.")
@@ -369,7 +364,6 @@ export class UserDashboardComponent implements OnInit {
   }
   
   setRatingAndSubmit(movieId: number, rating: number) {
-    // 1. BLOCK: Check if movie already has a rating
     if (this.selectedMovie?.userRating > 0) {
       this.showToast("You have already rated this movie.");
       return;
