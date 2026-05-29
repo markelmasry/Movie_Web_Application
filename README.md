@@ -62,9 +62,7 @@ A professional, full-stack movie management application built with **Spring Boot
 
 ### Backend Setup
 1.  **OMDB API Key:** Ensure your key is set in `src/main/resources/application.properties`.
-    ```properties
-    omdb.api.key=7f6fb6c7
-    ```
+
 2.  **Run Server:**
     ```bash
     mvn spring-boot:run
